@@ -14,6 +14,8 @@ A set of methods for the Formal and Approximate Verification and analysis of Neu
 
 
 ## Dependencies: 
+For the time being, we support only Keras models, but we plan to include/support as soon as possible also PyTorch, ONNX, and different standard formats on DNNs.
+
     - Tensorflow 2.16.1
     - numpy 1.26.4
     - cupy 13.1.0
