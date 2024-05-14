@@ -1,4 +1,4 @@
-# Neural-Network-Verifier
+# Neural-Network-Verifier <img width="100" alt="portfolio_view" align="right" src="https://isla-lab.github.io/images/slider/slider-image.svg"> 
 A set of methods for the Formal and Approximate Verification and analysis of Neural Networks, implemented in Python
 
 
