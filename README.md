@@ -6,12 +6,21 @@ A set of methods for the Formal and Approximate Verification and analysis of Neu
 ****
 
 
+## Available Algorithms: ProVe Family 
+- [x] ProVe [A, B, C]: Exact count/enumeration of all the portions of the property's domain that violate a safety property using efficient bound and parallel propagation.
+- [ ] CountingProVe [B]: Approximate count method with probabilistic guarantees on the interval of violation rate present in the property's domain.
+- [x] ϵ-ProVe [D]: Efficient approximate enumeration strategy with tight probabilistic guarantees for enumerating all the (un)safe regions of the property's domain for a given safety property. For the moment not integrated in this repo but available [here](https://github.com/d-corsi/eProVe)
+- [ ] ϵ-ProVe for robustness verification [available soon...]
+
+
 ## Dependencies: 
     - Tensorflow 2.16.1
     - numpy 1.26.4
     - cupy 13.1.0
     - psutil 5.9.8
     - cmake
+
+
 
 ## Definition of the properties
 Properties can be defined with 3 different formulations:
@@ -119,14 +128,14 @@ if __name__ == "__main__":
 
 
 ## Contributors
-*  **Gabriele Roncolato** - gabriele.roncolato@studenti.univr.it
 *  **Luca Marzari** - luca.marzari@univr.it
+*  **Gabriele Roncolato** - gabriele.roncolato@studenti.univr.it
 *  **Davide Corsi** - davide.corsi@univr.it
 
 ## Reference
 If you use our verifier in your work, please kindly cite our papers:
 
-**(A)** [Formal verification of neural networks for safety-critical tasks in deep reinforcement learning](https://proceedings.mlr.press/v161/corsi21a.html) Corsi D., Marchesini E., and Farinelli A. UAI, 2021
+**[A]** [Formal verification of neural networks for safety-critical tasks in deep reinforcement learning](https://proceedings.mlr.press/v161/corsi21a.html) Corsi D., Marchesini E., and Farinelli A. UAI, 2021
 ```
 @inproceedings{corsi2021formal,
   title={Formal verification of neural networks for safety-critical tasks in deep reinforcement learning},
@@ -138,7 +147,7 @@ If you use our verifier in your work, please kindly cite our papers:
 }
 ```
     
-**(B)** [The \#DNN-Verification Problem: Counting Unsafe Inputs for Deep Neural Networks](https://dl.acm.org/doi/abs/10.24963/ijcai.2023/25).  Marzari* L., Corsi* D., Cicalese F and Farinelli A. IJCAI, 2023
+**[B]** [The \#DNN-Verification Problem: Counting Unsafe Inputs for Deep Neural Networks](https://dl.acm.org/doi/abs/10.24963/ijcai.2023/25).  Marzari* L., Corsi* D., Cicalese F and Farinelli A. IJCAI, 2023
 ```
 @inproceedings{marzari2023dnn,
   title={The \#DNN-Verification Problem: Counting Unsafe Inputs for Deep Neural Networks},
@@ -149,12 +158,25 @@ If you use our verifier in your work, please kindly cite our papers:
 }
 ```
 
-**(C)** [Scaling #DNN-Verification Tools with Efficient Bound Propagation and Parallel Computing](https://arxiv.org/pdf/2312.05890).  Marzari L., Roncolato G., and Farinelli A. AIRO, 2023
+**[C]** [Scaling #DNN-Verification Tools with Efficient Bound Propagation and Parallel Computing](https://arxiv.org/pdf/2312.05890).  Marzari L., Roncolato G., and Farinelli A. AIRO, 2023
 ```
 @incollection{marzari2023scaling,
   title={Scaling \#DNN-Verification Tools with Efficient Bound Propagation and Parallel Computing},
   author={Marzari, Luca and Roncolato, Gabriele and Farinelli, Alessandro},
   booktitle={AIRO 2023 Artificial Intelligence and Robotics 2023},
   year={2023}
+}
+```
+
+**[D]** [Enumerating safe regions in deep neural networks with provable probabilistic guarantees](https://ojs.aaai.org/index.php/AAAI/article/view/30134).  Marzari L., Corsi D., Marchesini E. Farinelli A. and Cicalese F. AAAI, 2024
+```
+@inproceedings{marzari2024enumerating,
+  title={Enumerating safe regions in deep neural networks with provable probabilistic guarantees},
+  author={Marzari, Luca and Corsi, Davide and Marchesini, Enrico and Farinelli, Alessandro and Cicalese, Ferdinando},
+  booktitle={Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume={38},
+  number={19},
+  pages={21387--21394},
+  year={2024}
 }
 ```
