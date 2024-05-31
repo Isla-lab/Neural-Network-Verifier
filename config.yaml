@@ -1,23 +1,24 @@
 # We can request to compute an estimate for any verifier
 verifier:
-  name: ProVe
+  name: CountingProVe
   # Specify
   params:
     cpu_only: True
-    time_out_cycle: 60
-    time_out_checked: 0
-    interval_propagation_type: relaxation
-    memory_limit: 0
-    disk_limit: 0
     rounding: 3
     compute_violation_rate: True
-    estimation_points: 1000000
+    estimation_points: 10000
+    splits: 17
+    beta: 0.02
+    T: 350
+    compute_only_lower_bound: True
+
+
 
 
 # Specify path and type of model
 model:
-  path: temp_files/torch_model.pth
-  type: torch
+  path: temp_files/model_2_68.h5
+  type: keras
 
 # Example of concrete property
 property:

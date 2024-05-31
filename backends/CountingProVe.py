@@ -16,7 +16,7 @@ import utils.propagation as prop_utility
 import numpy as np
 from tqdm import tqdm
 
-class CountingProve():
+class CountingProVe():
 
     def __init__(self, config):
         # Input parameters
@@ -43,7 +43,7 @@ class CountingProve():
         self.property_sat = False
 
     
-    def verify(self):
+    def verify(self, verbose):
 
         for t in tqdm(range(self.T)):
 
@@ -83,7 +83,7 @@ class CountingProve():
             self.property_copy[node_index][random_side] = median
 
 
-        if self.cpu_only:
+        if not self.cpu_only:
             config = { 'model': { 'path': self.path_to_network }, 
                       'property': { 'domain': self.property }, 
                       'verifier': { 'params': 
@@ -104,7 +104,7 @@ class CountingProve():
             if not self.compute_violation_rate: 
                 rate_split = 1 - rate_split
         else:
-            rate_split, _, _ = self._get_sampled_violation(input_area=self.property_copy, cloud_size=1_000_000, violation=self.compute_violation_rate)
+            rate_split, _, _ = self._get_sampled_violation(input_area=self.property_copy, cloud_size=100000, violation=self.compute_violation_rate)
 
         
         area_leaf = self._compute_area_size(self.property_copy)
@@ -125,27 +125,20 @@ class CountingProve():
 
     def _get_sampled_violation(self, cloud_size=1000, input_area=None, violation=True):
 
-        if input_area is None: input_area = self.property
-        network_input = self._generate_input_points(cloud_size, input_area)
+        if input_area is None: input_area = self.property_copy
+        network_input = np.random.uniform(input_area[:, 0], input_area[:, 1], size=(cloud_size, input_area.shape[0]))
+        network_input = torch.from_numpy(network_input).float()
+        
         num_sat_points, sat_points = self._get_rate(self.network, network_input, violation)
-
         rate = (num_sat_points / cloud_size)
 
         return rate, sat_points, network_input.shape[0]
 
 
-    def _generate_input_points( self, cloud_size, input_area ):
-
-        input_area = input_area.reshape(1, input_area.shape[0], 2) 
-        domains = np.array([np.random.uniform(i[:, 0], i[:, 1], size=(cloud_size, input_area.shape[1])) for i in input_area])
-        network_input = domains.reshape(cloud_size*input_area.shape[0], -1)
-        
-        return network_input
-
 
     def _get_rate(self, model, network_input, violation):
-
-        model_prediction = model(torch.from_numpy(network_input)).numpy()
+        
+        model_prediction = model(network_input).detach().numpy()
 
         if violation:
             where_indexes = np.where([model_prediction <= 0])[1]
