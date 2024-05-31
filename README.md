@@ -1,5 +1,7 @@
 # Neural-Network-Verifier <img width="100" alt="portfolio_view" align="right" src="https://isla-lab.github.io/images/slider/slider-image.svg"> 
-A set of methods for the Formal and Approximate Verification and analysis of Neural Networks, implemented in Python
+A set of methods to enumerate formally or approximately (un)safe property regions implemented in Python. NetVer is compatible with any VNN comp (VNN-LIB format) properties and provides a comprehensive framework for verifying Deep Neural Networks.  
+
+**The repo is currently a work in progress**
 
 
 ![Alt text](https://github.com/GabrieleRoncolato/SymbolicPropagationCUDA/blob/master/images/overview.png)
