@@ -1,0 +1,95 @@
+# We can request to compute an estimate for any verifier
+verifier_0:
+  name: ProVe/CountingProVe/eProVe
+  # Specify
+  estimation:
+    cloud: 30000
+
+# For ProVe we can specify discretization precision, propagation method, memory and disk usage limits
+verifier_1:
+  name: ProVe
+  discretization: 3
+  propagation: naive/symbolic/relaxation
+  memory_limit: 1000
+  disk_limit: 1000
+
+# TODO fill in CountingProVe parameters
+verifier_2:
+  name: CountingProVe
+  ...
+
+# For eProVe we can specify the confidence ratio and the number of points for the uniform cloud
+verifier_3:
+  name: eProVe
+  confidence_ratio: 0.995
+  cloud: 3000
+
+# Specify path and type of model
+model:
+  path: ./
+  type: torch/onnx/...
+
+# Specify property via vnnlib file
+property_0:
+  path: ./
+
+# Manually set properties
+
+# Example of concrete property
+property_1:
+  # Choose between SAT / count / enumeration check
+  goal: SAT/count/enumeration
+  # TODO choose whether to give the possibility of targeting safe or unsafe areas
+  target: safe/unsafe
+  # Indicate type of property (concrete, abstract, hierarchical or coherence)
+  type: concrete
+  # Indicate safety condition
+  sat_condition:
+    # Choose concrete node to check
+    node: 1
+    # Specify absolute or relative bounds
+    bounds: positive/negative/min/max/[-3, 5] y_1 > 0
+  # Input domain
+  domain:
+    # Specify patches to perform patch-wise verification
+    patches:
+      # Patch size wrt input shape
+      patch_size: [3, 4]
+    # Bounds for each input node
+    bounds: [[0, 1], [2.5, 6], ...]
+
+# Example of abstract property
+property_2:
+  goal: SAT/count/enumeration
+  target: safe/unsafe
+  type: abstract
+  # Specify pools as aggregations of concrete output nodes
+  pools: [ (0, 2, 4), (5, 6), (1, 3) ]
+  safety_condition:
+    # Specify pool index instead of node index
+    pool: 2
+    bounds: positive/negative/max/[-3, 5]
+  domain:
+    bounds: [ [ 0, 1 ], [ 2.5, 6 ], ... ]
+
+# Example of hierarchical abstract property
+property_3:
+  goal: SAT/count/enumeration
+  target: safe/unsafe
+  type: hierarchical
+  pools: [ (0, 2, 4), (5, 6), (1, 3) ]
+  safety_condition:
+    pool: 2
+    # TODO find good way to indicate hierarchy of pools
+    order: (0) < (1, 2)
+  domain:
+    bounds: [ [ 0, 1 ], [ 2.5, 6 ], ... ]
+
+# Example of coherence property, no need for a safety condition
+property_4:
+  goal: SAT/count/enumeration
+  target: safe/unsafe
+  type: coherence
+  pools: [ (0, 2, 4), (5, 6), (1, 3) ]
+  domain:
+    bounds: [ [ 0, 1 ], [ 2.5, 6 ], ... ]

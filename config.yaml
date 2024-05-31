@@ -1,0 +1,26 @@
+# We can request to compute an estimate for any verifier
+verifier:
+  name: ProVe
+  # Specify
+  params:
+    cpu_only: False
+    time_out_cycle: 60
+    time_out_checked: 0
+    interval_propagation_type: relaxation
+    memory_limit: 0
+    disk_limit: 0
+    rounding: 3
+    compute_violation_rate: False
+    estimation_points: 1000000
+
+
+# Specify path and type of model
+model:
+  path: model_2_68.h5
+  type: keras
+
+# Example of concrete property
+property:
+  # Input domain
+  domain: [[0,1], [0,1]]
+  
