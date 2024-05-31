@@ -3,7 +3,7 @@ verifier:
   name: ProVe
   # Specify
   params:
-    cpu_only: True
+    cpu_only: False
     time_out_cycle: 60
     time_out_checked: 0
     interval_propagation_type: relaxation
@@ -16,8 +16,8 @@ verifier:
 
 # Specify path and type of model
 model:
-  path: temp_files/torch_model.pth
-  type: torch
+  path: temp_files/model_2_68.h5
+  type: keras
 
 # Example of concrete property
 property:

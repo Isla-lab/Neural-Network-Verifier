@@ -1,3 +1,15 @@
+###########################################################################
+##            This file is part of the NetVer verifier                   ##
+##                                                                       ##
+##   Copyright (C) 2023-2024 The NetVer Team                             ##                                                                 ##
+##   See CONTRIBUTORS for all author contacts and affiliations.          ##
+##                                                                       ##
+##     This program is licensed under the BSD 3-Clause License,          ##
+##        contained in the LICENCE file in this directory.               ##
+##                                                                       ##
+###########################################################################
+
+
 import os
 import shutil
 import torch
@@ -12,32 +24,12 @@ import psutil
 class ProVe():
 
 	"""
-	A class that implements ProVe, a verification tool based on the interval propagation. 
+	A class that implements ProVe (Corsi et al. 2021), a verification tool based on the interval propagation. 
 	This tool is based on a parallel implementation of the interval analysis on GPU that increase the performance.
 	It can also run on CPU in a sequential fashion, but this drastically reduce the performance.
 	Attributes
 	----------
-		P : list
-			input domain for the property in the form 'positive', each output from a point in this domain must be greater than zero.
-			2-dim list: a list of two element (lower_bound, upper_bound) for each input nodes
-		network : tf.keras.Model
-			tensorflow model to analyze, the model must be formatted in the 'tf.keras.Model(inputs, outputs)' format
-		unchecked_area: float
-			indicates the percentage of the residual input domain to explore
-		cpu_only: bool
-			flag variables to indicate if the tool is running in CPU mode (default: False)
-		time_out_cycle: int
-			provide a time out for the maximum number of cycle (default: 40) 
-		time_out_checked: float
-			provide a time out on the percentage of the verified domain, when the unknown percentage of the input domain
-			go under this threshold the algorithm stop the execution, considering all the remaining domain as a violation (default: 0)
-		rounding: int
-			rounding for the input domain real values, expressed as an integer that represent the number of decimals value, None
-			means that the rounding is the float precision of the system (default: None)
-		reversed: bool
-			this variables represent that the verification query is reversed, it means that "at least ONE output must be greater than 0" instead of the common
-			form where "ALL inputs must be greater than zero".
-
+	
 	Methods
 	-------
 		verify(verbose)
@@ -47,9 +39,6 @@ class ProVe():
 	
 	def __init__(self, config):
 		# Input parameters
-		print()
-		print(config)
-		print()
 		self.network = torch.load(config['model']['path'])
 		self.property = gen_utilities.create_property(config['property']['domain'])
 		self.compute_violation_rate = config['verifier']['params']['compute_violation_rate']
@@ -109,7 +98,7 @@ class ProVe():
 		
 		"""
 		
-		folder_path = "./partial_results"
+		folder_path = "./ProVe_partial_results"
 
 		if os.path.isdir(folder_path):
 			shutil.rmtree(folder_path)
