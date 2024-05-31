@@ -10,7 +10,7 @@ A set of methods to enumerate formally or approximately (un)safe property region
 
 ## Available Algorithms: ProVe Family 
 - [x] ProVe [A, B, C]: Exact count/enumeration of all the portions of the property's domain that violate a safety property using efficient bound and parallel propagation.
-- [ ] CountingProVe [B]: Approximate count method with probabilistic guarantees on the interval of violation rate present in the property's domain.
+- [x] CountingProVe [B]: Approximate count method with probabilistic guarantees on the interval of violation rate present in the property's domain.
 - [x] ϵ-ProVe [D]: Efficient approximate enumeration strategy with tight probabilistic guarantees for enumerating all the (un)safe regions of the property's domain for a given safety property. For the moment not integrated in this repo but available [here](https://github.com/d-corsi/eProVe)
 - [ ] ϵ-ProVe for robustness verification [available soon...]
 
