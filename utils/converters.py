@@ -105,7 +105,7 @@ def get_netver_model(config):
 	
     if config['model']['type'] == 'keras':
         torch_model = convert_keras_to_pytorch(config['model']['path'])
-        path = 'torch_model.pth'
+        path = 'temp_files/torch_model.pth'
         torch.save(torch_model, path)
         config['model']['path'] = path
        
