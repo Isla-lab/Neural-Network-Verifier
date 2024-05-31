@@ -53,7 +53,7 @@ def get_estimation(neural_net, property, points=3000, violation_rate=True):
 	return rate
 
 
-def multi_area_propagation_cpu(input_domain, net_model):
+def multi_area_propagation_cpu(input_domain, net_model, prop_type, memory_limit):
 
 	"""
 	Propagation of the input domain through the network to obtain the OVERESTIMATION of the output bound. 
@@ -103,7 +103,7 @@ def single_area_propagation_cpu(input_domain, net_model):
 	"""
 
 
-	weights = [layer.weight.detach().numpy().flatten() for layer in net_model.children()]
+	weights = [layer.weight.detach().numpy().T for layer in net_model.children()]
 	biases = [layer.bias.detach().numpy() for layer in net_model.children()]
 	activations = net_model.activations
 

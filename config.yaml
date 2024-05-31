@@ -10,13 +10,13 @@ verifier:
     memory_limit: 0
     disk_limit: 0
     rounding: 3
-    compute_violation_rate: False
+    compute_violation_rate: True
     estimation_points: 1000000
 
 
 # Specify path and type of model
 model:
-  path: model_2_68.h5
+  path: temp_files/model_2_68.h5
   type: keras
 
 # Example of concrete property
