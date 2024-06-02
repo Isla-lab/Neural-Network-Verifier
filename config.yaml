@@ -23,7 +23,7 @@ model:
 # Example of concrete property
 property:
   type: concrete
-
+  
   # Choose between SAT / count / enumeration check
   goal: count
 
@@ -32,9 +32,10 @@ property:
 
   domain:
     bounds: [[0., 1.], [0., 1.]]
-  
+    
   sat_condition:
     # Choose concrete node to check
+    num_nodes: 1
     node: 1
     # Specify absolute or relative bounds
     bounds: positive
