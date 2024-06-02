@@ -154,15 +154,14 @@ class CountingProVe():
 
 
     def print_results(self):
-        print(f"\nThe property is SAT? {self.lower_bound == 0}")
-
+         
         if self.property_sat:
             print(gen_utilities.bcolors.OKGREEN + "\nThe property is SAT!")
         else:
             print(gen_utilities.bcolors.BOLD + gen_utilities.bcolors.FAIL + "\nThe property is UNSAT!"+ gen_utilities.bcolors.ENDC)
                 
         print(f"\tConfidence: {round((1 - 2 ** (-self.beta*(self.T)))*100, 2)}%")
-        print(f"\tLower bound VR: {self.lower_bound}%" )
-        print(f"\tUpper bound VR: {100 - self.upper_bound}%" )
-        print(f"\tSize of the interval: {round((100 - self.upper_bound) - self.lower_bound, 2)}%" )
-        print(f"\tViolation rate: {round(((100 - self.upper_bound) + self.lower_bound)/2,2)}%\n" )
+        print(f"\tLower bound {'VR' if self.compute_violation_rate else 'SR'}: {self.lower_bound}%" )
+        if not self.compute_only_lower_bound: 
+            print(f"\tUpper bound {'VR' if self.compute_violation_rate else 'SR'}: {100 - self.upper_bound}%" )
+            print(f"\tSize of the interval: {round((100 - self.upper_bound) - self.lower_bound, 2)}%" )
