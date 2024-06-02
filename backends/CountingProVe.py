@@ -22,7 +22,10 @@ class CountingProVe():
         # Input parameters
         self.path_to_network = config['model']['path']
         self.network = torch.load(self.path_to_network)
-        self.property = gen_utilities.create_property(config['property']['domain'])
+
+        self.property = gen_utilities.create_property(config)[0]
+        self.input_predicate = np.array(self.property["inputs"])
+        self.output_predicate = np.array(self.property["outputs"])
 
         # Verification hyper-parameters
         self.compute_violation_rate = config['verifier']['params']['compute_violation_rate']
@@ -62,8 +65,8 @@ class CountingProVe():
      
     def count(self):	
 
-        initial_area = self._compute_area_size(self.property)
-        self.property_copy = self.property.copy()
+        initial_area = self._compute_area_size(self.input_predicate)
+        self.property_copy = self.input_predicate.copy()
         node_index = -1
         
         for _s in range(self.S):
@@ -85,7 +88,7 @@ class CountingProVe():
 
         if not self.cpu_only:
             config = { 'model': { 'path': self.path_to_network }, 
-                      'property': { 'domain': self.property }, 
+                      'property': { 'domain': self.input_predicate},
                       'verifier': { 'params': 
                                    { 'compute_violation_rate': self.compute_violation_rate, 
                                     'estimation_points': self.estimation_points,
@@ -118,7 +121,7 @@ class CountingProVe():
     def _compute_area_size(self, area=None):
 
         if area is None:
-            area = self.property 
+            area = self.input_predicate
         sides_sizes = [side[1] - side[0] for side in area]
         return np.prod(sides_sizes) 
 

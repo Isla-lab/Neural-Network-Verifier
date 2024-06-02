@@ -2,6 +2,7 @@ import yaml
 import importlib
 import numpy as np
 from utils.converters import get_netver_model
+from utils.yaml_property_reader import config_to_bounds
 
 class bcolors:
     HEADER = '\033[95m'
@@ -38,7 +39,7 @@ def check_parameters(config_file):
     pass
 
 def create_property(config_file_prop):
-    return np.array(config_file_prop)
+    return config_to_bounds(config_file_prop)
 
 
 def instantiate_verifier(params):

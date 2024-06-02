@@ -3,7 +3,7 @@ import re
 
 class VNNLIBParserException(Exception):
     """
-    Exception raised for errors in the format of VNNLIB files
+    Exception raised for errors while parsing VNN-LIB files
 
     Attributes:
         message -- explanation of the format error
@@ -23,6 +23,7 @@ def read_file(file_path):
         raise VNNLIBParserException(f"An error occurred while trying to open the file {file_path}: {e}")
 
 def get_compact_lines(content):
+    # Compact expressions spanning multiple lines into a single line based on the parentheses count
     compact_lines = []
 
     current_line = ""
@@ -61,9 +62,11 @@ def check_faulty_expression(expression_idx, expression, declaration_pattern, bou
     open_parentheses = expression.count("(")
     close_parentheses = expression.count(")")
 
+    # All open parentheses must be closed within the same expression
     if open_parentheses != close_parentheses:
         raise VNNLIBParserException(f"Unmatched number of parentheses at processed line {expression_idx}: {expression}")
     elif expression:
+        # All non-empty expressions must be either a declaration or an assertion
         declaration_matches = list(declaration_pattern.finditer(expression))
         expression_matches = list(bounds_pattern.finditer(expression))
 
@@ -71,10 +74,12 @@ def check_faulty_expression(expression_idx, expression, declaration_pattern, bou
             raise VNNLIBParserException(f"Badly formatted processed line {expression_idx}: {expression}")
 
 def sanity_check(expressions, declaration_pattern, bounds_pattern):
+    # Ensure that all expressions are valid or throw an exception
     for idx, expression in enumerate(expressions):
         check_faulty_expression(idx, expression, declaration_pattern, bounds_pattern)
 
 def extract_variable_declarations(expressions, declaration_pattern):
+    # Extract the declared variables from the expressions
     variable_declarations = {}
     input_vars = 0
     output_vars = 0
@@ -100,14 +105,94 @@ def sort_dict_by_numeric_keys(input_dict):
     sorted_dict = {key: input_dict[key] for key in sorted_keys}
     return sorted_dict
 
+def extract_from_disjunction(constraints, declared_variables):
+    new_bounds = []
+
+    # Find all constraints for the current disjunction
+    for constraint in constraints:
+        bounds = {"inputs": {}, "outputs": {}}
+
+        # Find all constraints for the current junction
+        for operator, variable, value in constraint:
+            if variable in declared_variables:
+                try:
+                    converted_value = float(value)
+                except ValueError:
+                    converted_value = value  # It's a variable name
+
+                # Set upper or lower bound
+                if operator == "<=":
+                    bound_idx = 1
+                else:
+                    bound_idx = 0
+
+                # Distinguish input from output constraints
+                if variable.startswith('X_'):
+                    if variable not in bounds["inputs"]:
+                        bounds["inputs"][variable] = [float('-inf'), float('inf')]
+
+                    bounds["inputs"][variable][bound_idx] = converted_value
+                else:
+                    if variable not in bounds["outputs"]:
+                        bounds["outputs"][variable] = [float('-inf'), float('inf')]
+
+                    # Append new acceptable constraints for each output within the same or
+                    bounds["outputs"][variable][bound_idx] = converted_value
+            else:
+                raise VNNLIBParserException(f"Assertion on undeclared variable {variable} in expression: {constraint}")
+
+        new_bounds.append(bounds)
+
+    return new_bounds
+
+def merge_properties(properties, new_bounds):
+    # Merge properties with equal input bounds
+    merged_properties = {}
+
+    for bound in new_bounds:
+        sorted_inputs = sort_dict_by_numeric_keys(bound["inputs"])
+        bound_key = json.dumps(sorted_inputs)
+
+        # Join under disjunction all output bounds with equal input bounds
+        if len(bound["inputs"]) == 0 and len(bound["outputs"]) > 0:
+            for prop in properties:
+                prop["outputs"].append(bound["outputs"])
+        elif len(bound["outputs"]) > 0:
+            if bound_key not in merged_properties:
+                merged_properties[bound_key] = [bound["outputs"]]
+            else:
+                merged_properties[bound_key].append(bound["outputs"])
+        else:
+            merged_properties[bound_key] = []
+
+    return merged_properties
+
+def propagate_old_properties(properties, new_properties):
+    # Join the new properties from the current expression with all previous properties
+    for new_prop in new_properties:
+        for prop in properties:
+            for variable in prop["inputs"].keys():
+                if variable not in new_prop["inputs"]:
+                    new_prop["inputs"][variable] = [float("-inf"), float("inf")]
+
+                if prop["inputs"][variable][0] > new_prop["inputs"][variable][0]:
+                    new_prop["inputs"][variable][0] = prop["inputs"][variable][0]
+                if prop["inputs"][variable][1] < new_prop["inputs"][variable][1]:
+                    new_prop["inputs"][variable][1] = prop["inputs"][variable][1]
+            for output_bounds in prop["outputs"]:
+                for new_output_bounds in new_prop["outputs"]:
+                    for variable in output_bounds.keys():
+                        if variable not in new_output_bounds:
+                            new_output_bounds[variable] = output_bounds[variable]
+
 def extract_properties(expressions, declared_variables, bounds_pattern):
-    # Regex to capture individual inequalities
+    # Regex to capture individual junction constraints
     details_pattern = re.compile(r'\((<=|>=) (X_\d+|Y_\d+) ([^\)]+)\)')
 
     properties = [{"inputs": {}, "outputs": []}]
 
+    # Find all constraints for all expressions
     for expression in expressions:
-        # Find all constraints in the current line
         if not bounds_pattern.match(expression):
             continue
 
@@ -119,72 +204,13 @@ def extract_properties(expressions, declared_variables, bounds_pattern):
             if constraint:
                 constraints.append(constraint)
 
-        new_bounds = []
+        new_bounds = extract_from_disjunction(constraints, declared_variables)
+        merged_properties = merge_properties(properties, new_bounds)
 
-        for constraint in constraints:
-            bounds = {"inputs": {}, "outputs": {}}
-
-            for operator, variable, value in constraint:
-                if variable in declared_variables:
-                    try:
-                        converted_value = float(value)
-                    except ValueError:
-                        converted_value = value  # It's a variable name
-
-                    if operator == "<=":
-                        bound_idx = 1
-                    else:
-                        bound_idx = 0
-
-                    if variable.startswith('X_'):
-                        if variable not in bounds["inputs"]:
-                            bounds["inputs"][variable] = [float('-inf'), float('inf')]
-
-                        bounds["inputs"][variable][bound_idx] = converted_value
-                    else:
-                        if variable not in bounds["outputs"]:
-                            bounds["outputs"][variable] = [float('-inf'), float('inf')]
-
-                        # Append new acceptable constraints for each output within the same or
-                        bounds["outputs"][variable][bound_idx] = converted_value
-                else:
-                    raise VNNLIBParserException(f"Assertion on undeclared variable {variable} in expression: {constraint}")
-
-            new_bounds.append(bounds)
-
-        merged_properties = {}
-
-        for bound in new_bounds:
-            sorted_inputs = sort_dict_by_numeric_keys(bound["inputs"])
-            bound_key = json.dumps(sorted_inputs)
-            if len(bound["inputs"]) == 0 and len(bound["outputs"]) > 0:
-                for prop in properties:
-                    prop["outputs"].append(bound["outputs"])
-            elif len(bound["outputs"]) > 0:
-                if bound_key not in merged_properties:
-                    merged_properties[bound_key] = [bound["outputs"]]
-                else:
-                    merged_properties[bound_key].append(bound["outputs"])
-            else:
-                merged_properties[bound_key] = []
-
+        # Derive new properties after merging
         new_properties = [{"inputs": json.loads(k), "outputs": v} for k, v in merged_properties.items()]
 
-        for new_prop in new_properties:
-            for prop in properties:
-                for variable in prop["inputs"].keys():
-                    if variable not in new_prop["inputs"]:
-                        new_prop["inputs"][variable] = [float("-inf"), float("inf")]
-
-                    if prop["inputs"][variable][0] > new_prop["inputs"][variable][0]:
-                        new_prop["inputs"][variable][0] = prop["inputs"][variable][0]
-                    if prop["inputs"][variable][1] < new_prop["inputs"][variable][1]:
-                        new_prop["inputs"][variable][1] = prop["inputs"][variable][1]
-                for output_bounds in prop["outputs"]:
-                    for new_output_bounds in new_prop["outputs"]:
-                        for variable in output_bounds.keys():
-                            if variable not in new_output_bounds:
-                                new_output_bounds[variable] = output_bounds[variable]
+        propagate_old_properties(properties, new_properties)
 
         if new_properties:
             properties = new_properties
@@ -195,6 +221,7 @@ def extract_properties(expressions, declared_variables, bounds_pattern):
     return properties
 
 def add_missing_output_bounds(properties, output_vars):
+    # Add inf bounds for unbounded output variables
     for prop in properties:
         for output_bound in prop["outputs"]:
             for var_idx in range(output_vars):
@@ -207,7 +234,26 @@ def add_missing_output_bounds(properties, output_vars):
 
     return properties
 
-def parse_file(file_path):
+def parse_vnnlib_file(file_path):
+    """
+    Method that opens the provided VNN-LIB file and parses it to extract properties (input and output bounds)
+
+    Parameters
+    ----------
+    	file_path : str
+    		The path to the VNN-LIB file to be parsed
+
+    Compute
+    ----------
+        properties : list[dict]
+        	A list of dictionaries, each for a distinct property
+        	Each dictionary contains the entries "inputs" and "outputs" for the input and output boundaries
+
+    Raises
+    ------
+        VNNLIBParserException
+            If an error is encountered while parsing the file or the file is badly formatted
+    """
     try:
         vnn_content = read_file(file_path)
     except VNNLIBParserException as e:
@@ -217,14 +263,20 @@ def parse_file(file_path):
     if not vnn_content:
         return None
 
+    # Compactify each expression into a single line
     lines = get_compact_lines(vnn_content)
 
+    # Regex to extract declared variables and asserted input and output boundaries
     declaration_pattern = re.compile(r'\(declare-const (\w+) (\w+)\)')
     bounds_pattern = re.compile(r'\(assert(?:\(or)?(?:\(and)?((?:\(<=|\(>=) (?:X_\d+|Y_\d+) [^\)]+\))*\)?\)?\)')
 
+    # Validate all expressions
     sanity_check(lines, declaration_pattern, bounds_pattern)
+    # Extract all declared variables
     declared_variables, input_vars, output_vars = extract_variable_declarations(lines, declaration_pattern)
+    # Extract all properties from assertions
     properties = extract_properties(lines, declared_variables, bounds_pattern)
+    # Add declared but unbounded output variables
     properties = add_missing_output_bounds(properties, output_vars)
 
     return properties

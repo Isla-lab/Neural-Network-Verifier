@@ -40,10 +40,14 @@ class ProVe():
 	def __init__(self, config):
 		# Input parameters
 		self.network = torch.load(config['model']['path'])
-		self.property = gen_utilities.create_property(config['property']['domain'])
+
+		self.property = gen_utilities.create_property(config)[0]
+		self.input_predicate = np.array(self.property["inputs"])
+		self.output_predicate = np.array(self.property["outputs"])
+
 		self.compute_violation_rate = config['verifier']['params']['compute_violation_rate']
 		self.estimation_points = config['verifier']['params']['estimation_points']
-		self.estimated_VR = prop_utility.get_estimation(self.network, self.property, self.estimation_points, self.compute_violation_rate)
+		self.estimated_VR = prop_utility.get_estimation(self.network, self.input_predicate, self.estimation_points, self.compute_violation_rate)
 		
 		# Verification hyper-parameters
 		self.cpu_only = config['verifier']['params']['cpu_only']
@@ -106,7 +110,7 @@ class ProVe():
 		os.mkdir(folder_path)
 
 		# Flatten the input domain to aobtain the areas matrix to simplify the splitting
-		areas_matrix = np.array([self.property.flatten()])
+		areas_matrix = np.array([self.input_predicate.flatten()])
 
 		disk_utils.write_array(areas_matrix, 0, folder_path)
 		free_file_index = 1
@@ -142,7 +146,7 @@ class ProVe():
 					continue
 
 				if self.rounding is not None: areas_matrix = np.round(areas_matrix, self.rounding)
-				test_domain = areas_matrix.reshape(-1, self.property.shape[0], 2)
+				test_domain = areas_matrix.reshape(-1, self.input_predicate.shape[0], 2)
 
 
 				# Call the propagation method to obtain the output bound from the input area (primal and dual)
@@ -350,7 +354,7 @@ class ProVe():
 				
 				res = np.concatenate((res, temp_result), axis=0)
 
-			areas_matrix = res.reshape((len(res) * 2, self.property.shape[0] * 2))
+			areas_matrix = res.reshape((len(res) * 2, self.input_predicate.shape[0] * 2))
 
 			# Save partial results to either a single file or multiple ones
 			if areas_matrix.shape[0] <= max_chunk_rows:
@@ -391,7 +395,7 @@ class ProVe():
 		split_idx = 0
 		smear = 0
 
-		for index, el in enumerate(row.reshape(self.property.shape[0], 2)):
+		for index, el in enumerate(row.reshape(self.input_predicate.shape[0], 2)):
 
 			distance = el[1] - el[0]
 			
@@ -423,12 +427,12 @@ class ProVe():
 
 		# Compute the number of necessary matrix (one for each node), all the matrices will have 2 times this size 
 		# to compute lower and upper bound
-		n = (self.property.shape[0] * 2)
+		n = (self.input_predicate.shape[0] * 2)
 		split_matrix = []
 
 		# Iterate over each node times upper and lower to update the splitting matrix, each matrix is an identity matrix with
 		# a splitting value (0.5) on the coordinate of the interested node.
-		for i in range( self.property.shape[0] ):
+		for i in range(self.input_predicate.shape[0]):
 			split_matrix_base = np.concatenate((np.identity(n, dtype="float32"), np.identity(n, dtype="float32")), 1)
 			split_matrix_base[(i * 2) + 0][(i * 2) + 1] = 0.5 
 			split_matrix_base[(i * 2) + 1][(i * 2) + 1] = (0.5 - rounding_fix)

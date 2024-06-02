@@ -1,9 +1,8 @@
-import yaml
-from vnnlib_parser import parse_file
+from utils.vnnlib_parser import parse_vnnlib_file
 
 class YamlConfigReaderException(Exception):
     """
-    Exception raised for errors in the format of VNNLIB files
+    Exception raised for errors in the format of YAML config files
 
     Attributes:
         message -- explanation of the format error
@@ -13,6 +12,7 @@ class YamlConfigReaderException(Exception):
         super().__init__(self.message)
 
 def fix_yaml_bounds(yaml_bounds):
+    # Convert numerical values for bounds to float type
     new_bounds = []
     for variable_bounds in yaml_bounds:
         float_bounds = []
@@ -27,6 +27,7 @@ def fix_yaml_bounds(yaml_bounds):
     return new_bounds
 
 def pools_to_disjunction(pools, pool_idx, num_nodes, bounds_type):
+    # Derive bounds for the specified pools of output nodes
     disjunction_bounds = []
 
     for node in pools[pool_idx]:
@@ -57,6 +58,7 @@ def pools_to_disjunction(pools, pool_idx, num_nodes, bounds_type):
     return disjunction_bounds
 
 def condition_type_to_pools(condition, condition_type):
+    # Handle concrete and abstract properties to derive output pools
     if condition_type == "concrete":
         num_nodes = int(condition["num_nodes"])
         num_pools = num_nodes
@@ -86,16 +88,19 @@ def prop_to_input_bounds(domain):
 def format_file_content(input_bounds, output_bounds):
     content = ""
 
+    # Add variable declarations
     for variable, _ in enumerate(input_bounds):
         content += f"(declare-const X_{variable} Real)\n"
 
     for variable, _ in enumerate(output_bounds[0]):
         content += f"(declare-const Y_{variable} Real)\n"
 
+    # Add input assertions
     for variable, input_bound in enumerate(input_bounds):
         content += f"(assert(>= X_{variable} {input_bound[0]}))\n"
         content += f"(assert(<= X_{variable} {input_bound[1]}))\n"
 
+    # Add disjunction output assertions
     content += f"(assert (or\n"
     for disjunction_bound in output_bounds:
         content += "    (and "
@@ -117,6 +122,7 @@ def write_to_file(file_path, content):
         raise YamlConfigReaderException(f"An error occurred while trying to write the vnnlib file {file_path}: {e}")
 
 def write_vnnlib_file(file_path, prop):
+    # Derive input and output bounds
     domain = prop["domain"]["bounds"]
     input_bounds = prop_to_input_bounds(domain)
 
@@ -124,21 +130,42 @@ def write_vnnlib_file(file_path, prop):
     condition_type = prop["type"]
     output_bounds = prop_to_output_bounds(condition, condition_type)
 
+    # Format bounds into the VNN-LIB format
     vnnlib_content = format_file_content(input_bounds, output_bounds)
 
+    # Write VNN-LIB properties to file
     write_to_file(file_path, vnnlib_content)
 
-def property_to_bounds(config_file_path):
-    with open(config_file_path, 'r') as config_file:
-        config = yaml.safe_load(config_file)
+def config_to_bounds(config):
+    """
+    Method that reads the provided config dictionary and derives input and output bounds for the sat-condition
+
+    Parameters
+    ----------
+    	config : dict
+    		The NetVer config dict
+
+    Compute
+    ----------
+        properties_bounds : list[dict]
+        	A list of dictionaries, each for a distinct property
+        	Each dictionary contains the entries "inputs" and "outputs" for the input and output boundaries
+
+    Raises
+    ------
+        YamlConfigReaderException
+            If an error is encountered while reading the config dictionary or for invalid configurations
+    """
     prop = config["property"]
 
+    # Extract bounds from a specified VNN-LIB file or write one based on the config file
     if "path" in prop:
-        properties = parse_file(prop["path"])
+        properties = parse_vnnlib_file(prop["path"])
     else:
         write_vnnlib_file("./config_property.vnnlib", prop)
-        properties = parse_file("./config_property.vnnlib")
+        properties = parse_vnnlib_file("./config_property.vnnlib")
 
+    # Change dictionary structure into list of lists
     properties_bounds = []
     for prop in properties:
         property_bounds = {"inputs": [], "outputs": []}

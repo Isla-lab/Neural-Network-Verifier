@@ -22,6 +22,7 @@ model:
 
 # Example of concrete property
 property:
-  # Input domain
-  domain: [[0,1], [0,1]]
+  # Choose between SAT / count / enumeration check
+  goal: SAT/count/enumeration
+  path: ./examples/dnf_1.vnnlib
   
