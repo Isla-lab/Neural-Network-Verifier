@@ -21,22 +21,23 @@ class FlexibleNNNumPy:
 def get_optimized_estimation(neural_net, property, points, violation_rate=True):
 	
 	# Extract weights and biases from PyTorch model
-	weights = [layer.weight.detach().numpy().T for layer in neural_net.layers]
-	biases = [layer.bias.detach().numpy() for layer in neural_net.layers]
+	weights = [layer.weight.detach().numpy().T for layer in neural_net.children()]
+	biases = [layer.bias.detach().numpy() for layer in neural_net.children()]
 	np_inputs = np.random.uniform(property[:, 0], property[:, 1], size=(points, property.shape[0]))
 
 	numpy_model = FlexibleNNNumPy(weights, biases)
-
-	network_output = []
-	for x in np_inputs:
-		network_output.append(numpy_model.forward(x))
+	network_output = numpy_model.forward(np_inputs)
+	network_output = np.array(network_output)
 
 	if violation_rate:
-		rate = np.where(network_output <= 0)[0].shape[0] / points
+		where_indexes = np.where([network_output <= 0])[1]
 	else:
-		rate = np.where(network_output > 0)[0].shape[0] / points
+		where_indexes = np.where([network_output > 0])[1]
 
-	return rate
+	sat_points = np_inputs[where_indexes]
+	rate = (len(where_indexes)/points)
+
+	return rate, sat_points
 	
 
 def get_estimation(neural_net, property, points=3000, violation_rate=True):
@@ -46,11 +47,15 @@ def get_estimation(neural_net, property, points=3000, violation_rate=True):
 	network_output = neural_net(network_input).detach().numpy()
 
 	if violation_rate:
-		rate = np.where(network_output <= 0)[0].shape[0] / points
+		where_indexes = np.where([network_output <= 0])[1]
 	else:
-		rate = np.where(network_output > 0)[0].shape[0] / points
+		where_indexes = np.where([network_output > 0])[1]
 
-	return rate
+	sat_points = network_input[where_indexes]
+	rate = (len(where_indexes)/points)
+
+	return rate, sat_points
+
 
 
 def multi_area_propagation_cpu(input_domain, net_model, prop_type, memory_limit):

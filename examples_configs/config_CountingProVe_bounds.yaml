@@ -6,13 +6,11 @@ verifier:
     cpu_only: True
     rounding: 3
     compute_violation_rate: True
-    estimation_points: 10000
+    estimation_points: 100000
     splits: 17
     beta: 0.02
-    T: 350
+    T: 100
     compute_only_lower_bound: True
-
-
 
 
 # Specify path and type of model
@@ -22,8 +20,21 @@ model:
 
 # Example of concrete property
 property:
-  # Choose between SAT / count / enumeration check
-  goal: SAT/count/enumeration
-  path: ./examples/dnf_1.vnnlib
+  type: concrete
   
+  # Choose between SAT / count / enumeration check
+  goal: count
+
+  # TODO choose whether to give the possibility of targeting safe or unsafe areas
+  target: unsafe
+
+  domain:
+    bounds: [[0., 1.], [0., 1.]]
+    
+  sat_condition:
+    # Choose concrete node to check
+    num_nodes: 1
+    node: 0
+    # Specify absolute or relative bounds
+    bounds: [0.000000001, inf]
 

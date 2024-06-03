@@ -12,7 +12,8 @@
 import torch
 from backends.ProVe import ProVe
 import utils.general_utils as gen_utilities
-import utils.propagation as prop_utility
+from utils.propagation import get_optimized_estimation
+from utils.propagation import get_estimation
 import numpy as np
 from tqdm import tqdm
 
@@ -73,10 +74,9 @@ class CountingProVe():
 
             node_index += 1
             if node_index > (self.property_copy.shape[0]-1): node_index = 0
-            cloud_size = self.estimation_points
+                                    
+            _, violated_points = get_optimized_estimation(neural_net=self.network, property=self.property_copy, points=self.estimation_points, violation_rate=self.compute_violation_rate)
 
-            _, violated_points, _ = self._get_sampled_violation(input_area=self.property_copy, cloud_size=cloud_size, violation=self.compute_violation_rate)			
-            
             if violated_points.shape[0] < 2:
                 median = np.random.uniform(self.property_copy[node_index][0], self.property_copy[node_index][1])
             else:	
@@ -107,9 +107,9 @@ class CountingProVe():
             if not self.compute_violation_rate: 
                 rate_split = 1 - rate_split
         else:
-            rate_split, _, _ = self._get_sampled_violation(input_area=self.property_copy, cloud_size=100000, violation=self.compute_violation_rate)
+            rate_split, _ = get_optimized_estimation(neural_net=self.network, property=self.property_copy, points=self.estimation_points, violation_rate=self.compute_violation_rate)
 
-        
+
         area_leaf = self._compute_area_size(self.property_copy)
         violated_leaf_points = area_leaf * rate_split
         ratio = violated_leaf_points / initial_area
@@ -117,41 +117,12 @@ class CountingProVe():
         return min(2**(self.S-self.beta) * ratio, 1)
 
 
-
     def _compute_area_size(self, area=None):
-
         if area is None:
             area = self.input_predicate
         sides_sizes = [side[1] - side[0] for side in area]
         return np.prod(sides_sizes) 
-
-
-    def _get_sampled_violation(self, cloud_size=1000, input_area=None, violation=True):
-
-        if input_area is None: input_area = self.property_copy
-        network_input = np.random.uniform(input_area[:, 0], input_area[:, 1], size=(cloud_size, input_area.shape[0]))
-        network_input = torch.from_numpy(network_input).float()
-        
-        num_sat_points, sat_points = self._get_rate(self.network, network_input, violation)
-        rate = (num_sat_points / cloud_size)
-
-        return rate, sat_points, network_input.shape[0]
-
-
-
-    def _get_rate(self, model, network_input, violation):
-        
-        model_prediction = model(network_input).detach().numpy()
-
-        if violation:
-            where_indexes = np.where([model_prediction <= 0])[1]
-        else:
-            where_indexes = np.where([model_prediction > 0])[1]
     
-        input_conf = network_input[where_indexes]
-
-        return len(where_indexes), input_conf
-
 
     def print_results(self):
          

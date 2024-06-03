@@ -30,17 +30,17 @@ class PyTorchModel(nn.Module):
             
 		def forward(self, x):
 			# Define the forward pass
-			for i in range(1, self.nLayers-1):
-				if self.activations[i] == 'relu':
+			for i in range(1, self.nLayers):
+				if self.activations[i-1] == 'relu':
 					x = F.relu(getattr(self, f'fc{i}')(x).to(x.dtype))
 					self.activations_torch.append(F.relu)
-				elif self.activations[i] == 'softmax':
+				elif self.activations[i-1] == 'softmax':
 					x = F.softmax(getattr(self, f'fc{i}')(x).to(x.dtype))
 					self.activations_torch.append(F.softmax)
-				elif self.activations[i] == 'sigmoid':
+				elif self.activations[i-1] == 'sigmoid':
 					x = F.sigmoid(getattr(self, f'fc{i}')(x).to(x.dtype))
 					self.activations_torch.append(F.sigmoid)
-				elif self.activations[i] == 'tanh':
+				elif self.activations[i-1] == 'tanh':
 					x = F.tanh(getattr(self, f'fc{i}')(x).to(x.dtype))
 					self.activations_torch.append(F.tanh)
 				else:
@@ -64,7 +64,7 @@ def convert_keras_to_pytorch(keras_model_path):
 	
 	# Create an instance of the PyTorch model
 	pytorch_model = PyTorchModel(info)
-
+	
     # Copy the weights and biases from the Keras model to the PyTorch model
 	keras_weights = [layer.get_weights() for layer in keras_model.layers[1:]]
 	for i, layer in enumerate(pytorch_model.children()):

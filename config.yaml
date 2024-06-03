@@ -6,13 +6,11 @@ verifier:
     cpu_only: True
     rounding: 3
     compute_violation_rate: True
-    estimation_points: 10000
+    estimation_points: 100000
     splits: 17
     beta: 0.02
-    T: 350
+    T: 100
     compute_only_lower_bound: True
-
-
 
 
 # Specify path and type of model
@@ -36,7 +34,7 @@ property:
   sat_condition:
     # Choose concrete node to check
     num_nodes: 1
-    node: 1
+    node: 0
     # Specify absolute or relative bounds
-    bounds: positive
+    bounds: [0.000000001, inf]
 
