@@ -1,0 +1,44 @@
+# We can request to compute an estimate for any verifier
+verifier:
+  name: eProVe
+  # Specify
+  params:
+    estimation_points: 3500 # number of points to estimate the volume of the target set, if not specified the verifier will compute the minimum number of points based on the confidence alpha and lower bound R specified
+    compute_only_estimation: False # whether to compute only the estimation of the volume of the target set
+    R: 0.995 # lower bound of the correctness on the probabilistic result of volume of the target set
+    alpha: 0.999 # confidence of the probabilistic result of volume of the target set
+    max_depth: 18 # maximum depth of the search tree
+    split_node_heuristic: rand # heuristic to choose the node to split
+    split_pos_heuristic: median # heuristic to choose the position to split
+    rate_tolerance_probability: 0.0001 # the rate under which do not split the node
+
+
+# Specify path and type of model
+model:
+  path: temp_files/model_2_68.h5
+  type: keras
+
+# Example of concrete property
+property:
+  # Choose between safety or robustness
+  type: safety
+
+  # Whether to use a concrete or abstract property
+  use_abstraction: False
+
+  # Choose between SAT / count / enumeration check
+  goal: enumeration
+  
+  # Choose whether to targeting safe or unsafe areas
+  target_volume: unsafe
+
+  # Property's domain to verify
+  domain:
+    bounds: [[0., 1.], [0., 1.]]
+    
+  # Specify the postcondition to check: positive or negative, range, max or min value w.r.t. all the other nodes
+  sat_condition:
+    # Choose concrete node to check
+    node_index: 0
+    # Condition to check
+    node_condition: max

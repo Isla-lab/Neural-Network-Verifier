@@ -1,0 +1,52 @@
+# We can request to compute an estimate for any verifier
+verifier:
+  name: eProVe
+  # Specify
+  params:
+    estimation_points: 3500 # number of points to estimate the volume of the target set, if not specified the verifier will compute the minimum number of points based on the confidence alpha and lower bound R specified
+    compute_only_estimation: False # whether to compute only the estimation of the volume of the target set
+    R: 0.995 # lower bound of the correctness on the probabilistic result of volume of the target set
+    alpha: 0.999 # confidence of the probabilistic result of volume of the target set
+    max_depth: 18 # maximum depth of the search tree
+    split_node_heuristic: rand # heuristic to choose the node to split
+    split_pos_heuristic: median # heuristic to choose the position to split
+    rate_tolerance_probability: 0.0001 # the rate under which do not split the node
+
+
+# Specify path and type of model
+model:
+  path: temp_files/model_2_68.h5
+  type: keras
+
+# Example of concrete property
+property:
+  # Choose between safety or robustness
+  type: robustness
+
+  # Whether to use a concrete or abstract property
+  use_abstraction: True
+
+  # Choose between SAT / count / enumeration check
+  goal: enumeration
+  
+  # Choose whether to targeting safe or unsafe areas
+  target_volume: unsafe
+
+  # Property's domain to verify
+  domain:
+    center: None
+    radius: None
+    patch_size: [4, 4] 
+    
+  # Specify the postcondition to check: positive or negative, range, max or min value w.r.t. all the other nodes
+  sat_condition:
+    # Pools of nodes to consider, assuming to have 3 different output nodes we consider the first two as a pool and the last one as another pool
+    pools: [[0, 1], [2]]
+
+    # Index of the pool to consider
+    pool_index: 0
+
+    # Condition to check
+    pool_condition: max # one of the node in the first pool has to be the maximum value w.r.t. all the other nodes
+    
+   

@@ -29,7 +29,7 @@ class CountingProVe():
         self.output_predicate = np.array(self.property["outputs"])
 
         # Verification hyper-parameters
-        self.compute_violation_rate = config['verifier']['params']['compute_violation_rate']
+        self.compute_violation_rate = config['property']['target_volume'] == 'unsafe'
         self.compute_only_lower_bound = config['verifier']['params']['compute_only_lower_bound']
         self.T = config['verifier']['params']['T']
         self.estimation_points = config['verifier']['params']['estimation_points']

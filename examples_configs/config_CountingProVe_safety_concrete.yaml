@@ -1,0 +1,42 @@
+# We can request to compute an estimate for any verifier
+verifier:
+  name: CountingProVe
+  # Specify
+  params:
+    cpu_only: True # set to False to use ProVe with GPU as backend 
+    rounding: 3  # rounding of the output of the verifier
+    estimation_points: 10000 # number of points to estimate the volume of the target set
+    splits: 17 # number of splits to perform before calling the Exact counter method
+    beta: 0.02 # max tolerated error for the estimation
+    T: 350 # number of iterations for the Violation Rate o Safe Rate estimation
+    compute_only_lower_bound: True # whether to compute only the lower bound of the (un)safe volume of the interval of (un)safe volume 
+
+# Specify path and type of model
+model:
+  path: temp_files/model_2_68.h5
+  type: keras
+
+# Example of concrete property
+property:
+  # Choose between safety or robustness
+  type: safety
+
+  # Whether to use a concrete or abstract property
+  use_abstraction: False
+
+  # Choose between SAT / count / enumeration check
+  goal: count
+  
+  # Choose whether to targeting safe or unsafe areas
+  target_volume: unsafe
+
+  # Property's domain to verify
+  domain:
+    bounds: [[0., 1.], [0., 1.]]
+    
+  # Specify the postcondition to check: positive or negative, range, max or min value w.r.t. all the other nodes
+  sat_condition:
+    # Choose concrete node to check
+    node_index: 1
+    # Condition to check
+    node_condition: max

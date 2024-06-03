@@ -45,7 +45,7 @@ class ProVe():
 		self.input_predicate = np.array(self.property["inputs"])
 		self.output_predicate = np.array(self.property["outputs"])
 
-		self.compute_violation_rate = config['verifier']['params']['compute_violation_rate']
+		self.compute_violation_rate = config['property']['target_volume'] == 'unsafe'
 		self.estimation_points = config['verifier']['params']['estimation_points']
 		self.estimated_VR = prop_utility.get_estimation(self.network, self.input_predicate, self.estimation_points, self.compute_violation_rate)
 		

@@ -24,7 +24,7 @@ property:
   type: safety
 
   # Whether to use a concrete or abstract property
-  use_abstraction: False
+  use_abstraction: True
 
   # Choose between SAT / count / enumeration check
   goal: count
@@ -38,9 +38,13 @@ property:
     
   # Specify the postcondition to check: positive or negative, range, max or min value w.r.t. all the other nodes
   sat_condition:
-    # Choose concrete node to check
-    node_index: 1
+    # Pools of nodes to consider, assuming to have 3 different output nodes we consider the first two as a pool and the last one as another pool
+    pools: [[0, 1], [2]]
+
+    # Index of the pool to consider
+    pool_index: 0
+
     # Condition to check
-    node_condition: max
+    pool_condition: max # one of the node in the first pool has to be the maximum value w.r.t. all the other nodes
     
    
