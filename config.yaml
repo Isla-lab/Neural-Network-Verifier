@@ -1,16 +1,17 @@
 # We can request to compute an estimate for any verifier
 verifier:
-  name: eProVe
+  name: ProVe
   # Specify
   params:
-    #estimation_points: 3500
-    compute_only_estimation: False
-    R: 0.995
-    alpha: 0.999
-    max_depth: 18
-    split_node_heuristic: rand
-    split_pos_heuristic: median
-    rate_tolerance_probability: 0.0001
+    cpu_only: True
+    time_out_cycle: 60
+    time_out_checked: 0
+    interval_propagation_type: relaxation
+    memory_limit: 0
+    disk_limit: 0
+    rounding: 3
+    compute_violation_rate: True
+    estimation_points: 1000000
 
 
 # Specify path and type of model

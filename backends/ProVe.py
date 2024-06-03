@@ -229,10 +229,12 @@ class ProVe():
 		self.property_sat = self.violation_rate == 0
 		self.safe_rate = 100 - self.violation_rate
 
-	def compute_bounds(self, input_domain):
-		bounds = self._propagation_method(input_domain, self.network, self.interval_propagation_type, self.memory_limit)
+	def compute_bounds(self):
+		areas_matrix = np.array([self.input_predicate.flatten()])
+		test_domain = areas_matrix.reshape(-1, self.input_predicate.shape[0], 2)
+		bounds = self._propagation_method(test_domain, self.network, self.interval_propagation_type, self.memory_limit)
 
-		return bounds
+		return [bounds[0][0][0], bounds[0][0][1]]
 
 	def _complete_verifier(self, test_bound):
 		

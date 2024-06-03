@@ -73,7 +73,7 @@ def single_area_propagation_cpu(input_domain, net_model):
 
 	weights = [layer.weight.detach().numpy().T for layer in net_model.children()]
 	biases = [layer.bias.detach().numpy() for layer in net_model.children()]
-	activations = net_model.activations
+	activations = net_model.activations_torch
 
 	# The entering values of the first iteration are the input for the propagation
 	entering = input_domain
@@ -150,7 +150,7 @@ def multi_area_propagation_gpu(input_domain, net_model, propagation, memory_limi
 
 	# Load network shape, activations and weights
 	layer_sizes = []
-	activations = net_model.activations
+	activations = net_model.activations_torch
 	full_weights = np.array([])
 	full_biases = np.array([])
 	layer_sizes.append(net_model.fc1.weight.shape[1:][0])
