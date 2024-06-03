@@ -27,8 +27,17 @@ class eProVe():
 		self.output_predicate = np.array(self.property["outputs"])
 
 		# Verification hyper-parameters
-		self.enumerate_unsafe_regions = config['verifier']['params']['enumerate_unsafe_regions']
-		self.estimation_points = config['verifier']['params']['estimation_points']
+		if 'alpha' in config['verifier']['params']:
+			self.confidence = config['verifier']['params']['alpha']
+			self.R = config['verifier']['params']['R']
+			self.estimation_points = int(np.emath.logn(self.R, (1-self.confidence)))
+		else:
+			self.estimation_points = config['verifier']['params']['estimation_points']
+			self.R = config['verifier']['params']['R']
+			self.confidence = 1 - (self.R**self.estimation_points)
+
+
+		self.enumerate_unsafe_regions = config['property']['target'] == 'unsafe'
 		self.compute_only_estimation = config['verifier']['params']['compute_only_estimation']
 		self.max_depth = config['verifier']['params']['max_depth']
 		self.split_node_heuristic = config['verifier']['params']['split_node_heuristic']
@@ -49,7 +58,7 @@ class eProVe():
 			pass
 
 		else:
-			root = Node(value=self.input_predicate, network=self.network, split_node_heu=self.split_node_heuristic, split_pos_heu=self.split_pos_heuristic, max_depth=self.max_depth, unsafe_regions=self.enumerate_unsafe_regions, rate_tolerance_probability=self.rate_tolerance_probability)
+			root = Node(value=self.input_predicate, network=self.network, split_node_heuristic=self.split_node_heuristic, split_pos_heuristic=self.split_pos_heuristic, max_depth=self.max_depth, enumerate_unsafe_regions=self.enumerate_unsafe_regions, rate_tolerance_probability=self.rate_tolerance_probability)
 
 			frontier = [root]
 			next_frontier = []
@@ -97,4 +106,28 @@ class eProVe():
 				'areas-number': len([subarea.value for subarea in areas_verified]),
 				'depth-reached': depth
 			}
+
+			self.property_sat = self.total_rate == 0
+
+	def compute_bounds(self):
+		network_input = np.random.uniform(self.input_predicate[:, 0], self.input_predicate[:, 1], size=(3_000_000, self.input_predicate.shape[0]))
+		network_input = torch.from_numpy(network_input).float()
+		network_output = self.network(network_input).detach().numpy()
+
+		return [min(network_output).item(), max(network_output).item()]
 			
+	def print_results(self):
+		if self.property_sat:
+			print(gen_utilities.bcolors.OKGREEN + "\nThe property is SAT!")
+		else:
+			print(gen_utilities.bcolors.BOLD + gen_utilities.bcolors.FAIL + "\nThe property is UNSAT!"+ gen_utilities.bcolors.ENDC)
+
+		print(f"\tLower bound {'VR' if self.enumerate_unsafe_regions else 'SR'}: {self.total_rate*100}%")
+		print(f"\tNum {'unsafe' if self.enumerate_unsafe_regions else 'safe'} areas {self.info['areas-number']}")	
+		print(f"\tEach {'unsafe' if self.enumerate_unsafe_regions else 'safe'} area presents at most {round((1-self.R)*100, 2)}% of {'safe' if self.enumerate_unsafe_regions else 'unsafe'} volume")
+		print(f"\tConfidence: {round(self.confidence*100, 8)}%")
+		print(f"\tEstimation points used: {self.estimation_points}\n")
+		
+		
+		
+

@@ -3,43 +3,6 @@ import torch
 import torch.nn.functional as F
 
 
-# TODO: fix with general activation function and DNN architecture
-# Define a flexible neural network in NumPy with the same weights and biases
-class FlexibleNNNumPy:
-    def __init__(self, weights, biases):
-        self.weights = weights
-        self.biases = biases
-		
-    def forward(self, x):
-        for W, b in zip(self.weights[:-1], self.biases[:-1]):
-            x = np.dot(x, W) + b
-            x = np.maximum(x, 0)  # ReLU activation
-        x = np.dot(x, self.weights[-1]) + self.biases[-1]
-        return x
-
-
-def get_optimized_estimation(neural_net, property, points, violation_rate=True):
-	
-	# Extract weights and biases from PyTorch model
-	weights = [layer.weight.detach().numpy().T for layer in neural_net.children()]
-	biases = [layer.bias.detach().numpy() for layer in neural_net.children()]
-	np_inputs = np.random.uniform(property[:, 0], property[:, 1], size=(points, property.shape[0]))
-
-	numpy_model = FlexibleNNNumPy(weights, biases)
-	network_output = numpy_model.forward(np_inputs)
-	network_output = np.array(network_output)
-
-	if violation_rate:
-		where_indexes = np.where([network_output <= 0])[1]
-	else:
-		where_indexes = np.where([network_output > 0])[1]
-
-	sat_points = np_inputs[where_indexes]
-	rate = (len(where_indexes)/points)
-
-	return rate, sat_points
-	
-
 def get_estimation(neural_net, property, points=3000, violation_rate=True):
 
 	network_input = np.random.uniform(property[:, 0], property[:, 1], size=(points, property.shape[0]))

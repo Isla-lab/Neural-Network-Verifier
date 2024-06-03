@@ -1,6 +1,6 @@
 import numpy as np; 
 import torch
-from propagation import get_optimized_estimation
+from utils.propagation import get_estimation
 
 class Node:
 
@@ -50,7 +50,7 @@ class Node:
 
         # Generate a point cloud of size 'point cloud' and propagate it
 		# through the network to get the probability of having a (un)safe point with Wilks probabilistic guarantees
-		self._probability, sat_points = get_optimized_estimation(self.network, self.value, point_cloud, violation_rate=self.enumerate_unsafe_regions)
+		self._probability, sat_points = get_estimation(self.network, self.value, point_cloud, violation_rate=self.enumerate_unsafe_regions)
 		
 		# These two special cases will never been splitted, however for heuristic
 		# purposes we must return a placeholder for the heuristic variables, it 
@@ -108,8 +108,8 @@ class Node:
 
 		# Call the Node class for the generation of the nodes
 		self._children = [
-			Node(value=value_1, network=self.network, depth=self.depth+1, parent=self, split_node_heu=self.split_node_heuristic, split_pos_heu=self.split_pos_heuristic, max_depth=self.max_depth, unsafe_rate=self.unsafe_rate),
-			Node(value=value_2, network=self.network, depth=self.depth+1, parent=self, split_node_heu=self.split_node_heuristic, split_pos_heu=self.split_pos_heuristic, max_depth=self.max_depth, unsafe_rate=self.unsafe_rate)
+			Node(value=value_1, network=self.network, depth=self.depth+1, parent=self, split_node_heuristic=self.split_node_heuristic, split_pos_heuristic=self.split_pos_heuristic, max_depth=self.max_depth, enumerate_unsafe_regions=self.enumerate_unsafe_regions),
+			Node(value=value_2, network=self.network, depth=self.depth+1, parent=self, split_node_heuristic=self.split_node_heuristic, split_pos_heuristic=self.split_pos_heuristic, max_depth=self.max_depth, enumerate_unsafe_regions=self.enumerate_unsafe_regions)
 		]
 
 		# Return the generated childred if not already returned
@@ -192,7 +192,7 @@ class Node:
 		if self.split_node_heuristic == "rand": 
 			node = np.random.randint(0, self.value.shape[0]) 
 		elif self.split_node_heuristic == "size":
-			distances = [ (el[1] - el[0]) for el in self.value ]
+			distances = [(el[1] - el[0]) for el in self.value]
 			node = np.argmax(distances)
 		else:
 			print(f"Invalid Heurisitc Check... {self.split_node_heuristic}"); quit()
@@ -205,7 +205,7 @@ class Node:
 		elif self.split_pos_heuristic == "median":
 				pivot_value = self._propagated_median[node]
 		else:
-			print( f"Invalid Heurisitc Check... {self.split_pos_heuristic}"); quit()
+			print(f"Invalid Heurisitc Check... {self.split_pos_heuristic}"); quit()
 
 		# 
 		return node, pivot_value

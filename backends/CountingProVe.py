@@ -123,6 +123,24 @@ class CountingProVe():
         sides_sizes = [side[1] - side[0] for side in area]
         return np.prod(sides_sizes) 
     
+    def compute_bounds(self):
+        config = { 'model': { 'path': self.path_to_network }, 
+                      'property': { 'domain': self.input_predicate},
+                      'verifier': { 'params': 
+                                   { 'compute_violation_rate': self.compute_violation_rate, 
+                                    'estimation_points': self.estimation_points,
+                                     'cpu_only': self.cpu_only,
+                                        'time_out_cycle': 0,
+                                        'time_out_checked': 0,
+                                        'rounding': self.rounding,
+                                        'interval_propagation_type': 'relaxation',
+                                        'memory_limit': 0,
+                                        'disk_limit': 0
+                                       } } }
+            
+        verifier = ProVe(config)
+        bounds = verifier.compute_bounds(config['property']['domain'])
+        return bounds
 
     def print_results(self):
          

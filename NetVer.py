@@ -9,7 +9,10 @@ if __name__ == '__main__':
     verifier = instantiate_verifier(config)
 
     # start the verification process
-    verifier.verify(verbose=1)
+    #verifier.verify(verbose=1)
+    bounds = verifier.compute_bounds()
+    print(bounds)
+    quit()
 
     # report the final results 
     verifier.print_results()
