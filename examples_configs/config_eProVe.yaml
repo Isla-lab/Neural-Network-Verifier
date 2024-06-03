@@ -20,6 +20,7 @@ model:
 
 # Example of concrete property
 property:
+  
   type: concrete
   
   # Choose between SAT / count / enumeration check

@@ -8,11 +8,12 @@ if __name__ == '__main__':
     # automatically instanciate the selected verifier
     verifier = instantiate_verifier(config)
 
-    # start the verification process
-    #verifier.verify(verbose=1)
+    # compute bounds for the selected verifier
     bounds = verifier.compute_bounds()
     print(bounds)
-    quit()
+
+    # start the verification process
+    verifier.verify(verbose=1)
 
     # report the final results 
     verifier.print_results()

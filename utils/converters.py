@@ -92,11 +92,20 @@ def get_netver_model(config):
 	--------
 		netver_model : torch model with augmented output layer
 	"""
-
+	
+	# load/ convert original model to torch
 	if config['model']['type'] == 'keras':
 		convert_keras_to_pytorch(config['model']['path'])
 		path = 'temp_files/torch_model.pth'
 		config['model']['path'] = path
 	   
+	# compute properties
+	# get original output shape
+	model = torch.load(config['model']['path'])
+	output_shape = model(torch.rand(1, model.input_shape)).shape[1]
+	config['property']['sat_condition']['output_shape'] = output_shape
+
+	# convert original model to NetVer model
+	#TODO: implement conversion
 
 	return config['model']['path']
