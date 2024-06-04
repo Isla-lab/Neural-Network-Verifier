@@ -2,10 +2,8 @@ import os; os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ['TF_KERAS'] = '1'
 import warnings; warnings.filterwarnings("ignore")
 import tensorflow as tf
-from keras.layers import Conv2D
 import torch.nn as nn
 import torch.nn.functional as F
-from math import isclose
 import torch
 
 # Define a PyTorch model that replicates the Keras model

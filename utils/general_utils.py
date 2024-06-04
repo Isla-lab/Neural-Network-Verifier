@@ -38,9 +38,9 @@ def check_parameters(config_file):
     #verifier to be checked: ["ProVe", "CountingProVe", "eProVe"]
     pass
 
-def create_property(config_file_prop):
-    return config_to_bounds(config_file_prop)
-
+def create_property(config_file_prop, input_shape, output_shape):
+    config_to_bounds(config_file_prop, input_shape, output_shape)
+    quit()
 
 def instantiate_verifier(params):
     verifier = params['verifier']['name']

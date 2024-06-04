@@ -22,9 +22,11 @@ class CountingProVe():
     def __init__(self, config):
         # Input parameters
         self.path_to_network = config['model']['path']
+        input_shape = config['model']['input_shape']
+        output_shape = config['model']['output_shape']
         self.network = torch.load(self.path_to_network)
 
-        self.property = gen_utilities.create_property(config)[0]
+        self.property = gen_utilities.create_property(config, input_shape, output_shape)[0]
         self.input_predicate = np.array(self.property["inputs"])
         self.output_predicate = np.array(self.property["outputs"])
 

@@ -16,6 +16,8 @@ verifier:
 # Specify path and type of model
 model:
   path: temp_files/model_2_68.h5
+  input_shape: [2]
+  output_shape: [1]
   type: keras
 
 # Example of concrete property

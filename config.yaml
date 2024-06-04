@@ -17,14 +17,16 @@ verifier:
 model:
   path: temp_files/model_2_68.h5
   type: keras
+  input_shape: [3, 3]
+  output_shape: [5]
 
 # Example of concrete property
 property:
   # Choose between safety or robustness
-  type: safety
+  type: robustness
 
   # Whether to use a concrete or abstract property
-  use_abstraction: False
+  use_abstraction: True
 
   # Choose between SAT / count / enumeration check
   goal: count
@@ -34,13 +36,16 @@ property:
 
   # Property's domain to verify
   domain:
-    bounds: [[0., 1.], [0., 1.]]
+    center: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    radius: 0.3
+    patch_size: [2, 2]
     
   # Specify the postcondition to check: positive or negative, range, max or min value w.r.t. all the other nodes
   sat_condition:
-    # Choose concrete node to check
-    node_index: 1
+    # Index of the pool to consider
+    pool_index: 2
+    pools: [[0], [1, 2], [3, 4]]
     # Condition to check
-    node_condition: max
+    pool_condition: max
     
    

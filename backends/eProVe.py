@@ -22,7 +22,10 @@ class eProVe():
 		self.path_to_network = config['model']['path']
 		self.network = torch.load(self.path_to_network)
 
-		self.property = gen_utilities.create_property(config)[0]
+		input_shape = config['model']['input_shape']
+		output_shape = config['model']['output_shape']
+
+		self.property = gen_utilities.create_property(config, input_shape, output_shape)[0]
 		self.input_predicate = np.array(self.property["inputs"])
 		self.output_predicate = np.array(self.property["outputs"])
 
@@ -52,7 +55,7 @@ class eProVe():
 
     
 
-	def verify(self, verbose=False):
+	def verify(self):
 
 		if self.compute_only_estimation:
 			pass

@@ -41,7 +41,10 @@ class ProVe():
 		# Input parameters
 		self.network = torch.load(config['model']['path'])
 
-		self.property = gen_utilities.create_property(config)[0]
+		input_shape = config['model']['input_shape']
+		output_shape = config['model']['output_shape']
+
+		self.property = gen_utilities.create_property(config, input_shape, output_shape)[0]
 		self.input_predicate = np.array(self.property["inputs"])
 		self.output_predicate = np.array(self.property["outputs"])
 
