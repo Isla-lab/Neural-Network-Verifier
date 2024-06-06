@@ -101,7 +101,7 @@ def get_netver_model(config):
 	# get original output shape
 	model = torch.load(config['model']['path'])
 	output_shape = model(torch.rand(1, model.input_shape)).shape[1]
-	config['property']['sat_condition']['output_shape'] = output_shape
+	config['model']['output_shape'] = output_shape
 
 	# convert original model to NetVer model
 	#TODO: implement conversion

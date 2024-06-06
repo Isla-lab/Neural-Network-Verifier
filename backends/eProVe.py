@@ -15,21 +15,18 @@ from utils.backends_utils import Node
 import numpy as np
 from tqdm import tqdm
 
-class eProVe():
+class eProVe:
 
-	def __init__(self, config):
+	def __init__(self, config, prop):
 		# Input parameters
 		self.path_to_network = config['model']['path']
 		self.network = torch.load(self.path_to_network)
 
-		input_shape = config['model']['input_shape']
-		output_shape = config['model']['output_shape']
-
-		self.property = gen_utilities.create_property(config, input_shape, output_shape)[0]
+		self.property = prop
 		self.input_predicate = np.array(self.property["inputs"])
 		self.output_predicate = np.array(self.property["outputs"])
 
-		# Verification hyper-parameters
+		# Verification hyperparameters
 		if 'alpha' in config['verifier']['params']:
 			self.confidence = config['verifier']['params']['alpha']
 			self.R = config['verifier']['params']['R']
@@ -84,7 +81,7 @@ class eProVe():
 						next_frontier.append(child_2)
 
 				# The tree has been completely explored
-				if frontier == []: break
+				if not frontier: break
 
 				# Compute the underestimation of the safe areas and the safe rate
 				regions_size = sum([ subarea.compute_area_size() for subarea in areas_verified ])

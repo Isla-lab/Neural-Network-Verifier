@@ -21,7 +21,7 @@ import numpy as np
 import psutil
 
 
-class ProVe():
+class ProVe:
 
 	"""
 	A class that implements ProVe (Corsi et al. 2021), a verification tool based on the interval propagation. 
@@ -37,14 +37,11 @@ class ProVe():
 	"""
 
 	
-	def __init__(self, config):
+	def __init__(self, config, prop):
 		# Input parameters
 		self.network = torch.load(config['model']['path'])
 
-		input_shape = config['model']['input_shape']
-		output_shape = config['model']['output_shape']
-
-		self.property = gen_utilities.create_property(config, input_shape, output_shape)[0]
+		self.property = prop
 		self.input_predicate = np.array(self.property["inputs"])
 		self.output_predicate = np.array(self.property["outputs"])
 
@@ -52,7 +49,7 @@ class ProVe():
 		self.estimation_points = config['verifier']['params']['estimation_points']
 		self.estimated_VR = prop_utility.get_estimation(self.network, self.input_predicate, self.estimation_points, self.compute_violation_rate)
 		
-		# Verification hyper-parameters
+		# Verification hyperparameters
 		self.cpu_only = config['verifier']['params']['cpu_only']
 		self.time_out_cycle = int(config['verifier']['params']['time_out_cycle'])
 		self.time_out_checked = int(config['verifier']['params']['time_out_checked'])
@@ -404,7 +401,7 @@ class ProVe():
 
 			distance = el[1] - el[0]
 			
-			if(distance == 0): closed.append(index)
+			if distance == 0: closed.append(index)
 
 			if distance > smear:
 				smear = distance

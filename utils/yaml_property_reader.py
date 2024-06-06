@@ -1,4 +1,4 @@
-from utils.vnnlib_parser import parse_vnnlib_file
+from utils.vnnlib_parser import parse_vnnlib_files
 
 class YamlConfigReaderException(Exception):
     """
@@ -84,13 +84,24 @@ def get_standard_bounds(center):
         bounds.append([x, x])
     return bounds
 
-def recurse_over_patch_dimensionality(input_shape, patch_size, current_dim, current_input_bounds, start_indices, patch_indices, radius):
+def perturb_bounds(bounds, perturbation, perturbation_type):
+    if perturbation_type == "radius":
+        bounds[0] -= perturbation
+        bounds[1] += perturbation
+    elif perturbation_type == "upper_threshold":
+        bounds[1] = perturbation
+    elif perturbation_type == "lower_threshold":
+        bounds[0] = perturbation
+    else:
+        raise YamlConfigReaderException(f"Invalid perturbation type: {perturbation_type}")
+
+def recurse_over_patch_dimensionality(input_shape, patch_size, current_dim, current_input_bounds, start_indices, patch_indices, perturbation, perturbation_type):
     if current_dim < len(patch_size):
         for x in range(start_indices[current_dim], start_indices[current_dim] + patch_size[current_dim]):
             current_patch_indices = patch_indices.copy()
             current_patch_indices.append(x)
             recurse_over_patch_dimensionality(input_shape, patch_size, current_dim + 1, current_input_bounds, start_indices,
-                                              current_patch_indices, radius)
+                                              current_patch_indices, perturbation, perturbation_type)
     else:
         final_index = 0
         for dim, index in enumerate(patch_indices):
@@ -99,37 +110,39 @@ def recurse_over_patch_dimensionality(input_shape, patch_size, current_dim, curr
                 volume *= input_shape[other_dim]
             final_index += volume
 
-        current_input_bounds[final_index][0] -= radius
-        current_input_bounds[final_index][1] += radius
+        perturb_bounds(current_input_bounds[final_index], perturbation, perturbation_type)
 
-def recurse_over_input_dimensionality(input_shape, patch_size, current_dim, input_bounds, start_indices, center, radius):
+def recurse_over_input_dimensionality(input_shape, patch_size, current_dim, input_bounds, start_indices, center, perturbation, perturbation_type):
     if current_dim < len(input_shape):
         for x in range(input_shape[current_dim] - patch_size[current_dim] + 1):
             current_start_indices = start_indices.copy()
             current_start_indices.append(x)
-            recurse_over_input_dimensionality(input_shape, patch_size, current_dim + 1, input_bounds, current_start_indices, center, radius)
+            recurse_over_input_dimensionality(input_shape, patch_size, current_dim + 1, input_bounds, current_start_indices, center, perturbation, perturbation_type)
     else:
         current_input_bounds = get_standard_bounds(center)
-        recurse_over_patch_dimensionality(input_shape, patch_size, 0, current_input_bounds, start_indices, [], radius)
+        recurse_over_patch_dimensionality(input_shape, patch_size, 0, current_input_bounds, start_indices, [], perturbation, perturbation_type)
         input_bounds.append(current_input_bounds)
 
-def radius_to_bounds(domain, input_shape):
+def perturbation_to_bounds(domain, input_shape):
     center = domain["center"]
-    radius = float(domain["radius"])
+    perturbation = float(domain["perturbation"])
+    perturbation_type = domain["perturbation_type"]
     patch_size = domain["patch_size"]
 
     if not patch_size:
         input_bounds = []
         for value in center:
             converted_value = float(value)
-            input_bounds.append([converted_value - radius, converted_value + radius])
+            bounds = [converted_value, converted_value]
+            perturb_bounds(bounds, perturbation, perturbation_type)
+            input_bounds.append(bounds)
             input_bounds = [input_bounds]
     else:
         if len(patch_size) != len(input_shape):
             raise YamlConfigReaderException(f"Invalid patch size {patch_size} for the given input shape {input_shape}")
 
         input_bounds = []
-        recurse_over_input_dimensionality(input_shape, patch_size, 0, input_bounds, [], center, radius)
+        recurse_over_input_dimensionality(input_shape, patch_size, 0, input_bounds, [], center, perturbation, perturbation_type)
 
     return input_bounds
 
@@ -137,7 +150,7 @@ def prop_to_input_bounds(domain, condition_type, input_shape):
     if condition_type == "safety":
         input_bounds = fix_yaml_bounds(domain["bounds"])
     elif condition_type == "robustness":
-        input_bounds = radius_to_bounds(domain, input_shape)
+        input_bounds = perturbation_to_bounds(domain, input_shape)
     else:
         raise YamlConfigReaderException(f"Invalid condition type: {condition_type}")
     return input_bounds
@@ -201,7 +214,7 @@ def write_vnnlib_file(file_path, prop, input_shape, output_shape):
     # Write VNN-LIB properties to file
     write_to_file(file_path, vnnlib_content)
 
-def config_to_bounds(config, input_shape, output_shape):
+def config_to_bounds(config):
     """
     Method that reads the provided config dictionary and derives input and output bounds for the sat-condition
 
@@ -209,10 +222,6 @@ def config_to_bounds(config, input_shape, output_shape):
     ----------
      config : dict
     	 The NetVer config dict
-     input_shape : list
-         the input shape of the neural network
-     output_shape : list
-         the output shape of the neural network
 
     Compute
     ----------
@@ -226,28 +235,31 @@ def config_to_bounds(config, input_shape, output_shape):
             If an error is encountered while reading the config dictionary or for invalid configurations
     """
     prop = config["property"]
+    input_shape = config["model"]["input_shape"]
+    output_shape = config["model"]["output_shape"]
 
     # Extract bounds from a specified VNN-LIB file or write one based on the config file
     if "path" in prop:
-        properties = parse_vnnlib_file(prop["path"])
+        properties_set = parse_vnnlib_files(prop["path"])
     else:
         write_vnnlib_file("./config_property.vnnlib", prop, input_shape, output_shape)
-        properties = parse_vnnlib_file("./config_property.vnnlib")
+        properties_set = parse_vnnlib_files("./config_property.vnnlib")
 
     # Change dictionary structure into list of lists
     properties_bounds = []
-    for prop in properties:
-        property_bounds = {"inputs": [], "outputs": []}
+    for properties in properties_set:
+        for prop in properties:
+            property_bounds = {"inputs": [], "outputs": []}
 
-        for variable in prop["inputs"].keys():
-            property_bounds["inputs"].append(prop["inputs"][variable])
+            for variable in prop["inputs"].keys():
+                property_bounds["inputs"].append(prop["inputs"][variable])
 
-        for output_disjunction in prop["outputs"]:
-            new_output_bounds = []
-            for variable in output_disjunction.keys():
-                new_output_bounds.append(output_disjunction[variable])
-            property_bounds["outputs"].append(new_output_bounds)
+            for output_disjunction in prop["outputs"]:
+                new_output_bounds = []
+                for variable in output_disjunction.keys():
+                    new_output_bounds.append(output_disjunction[variable])
+                property_bounds["outputs"].append(new_output_bounds)
 
-        properties_bounds.append(property_bounds)
+            properties_bounds.append(property_bounds)
 
     return properties_bounds

@@ -17,35 +17,16 @@ verifier:
 model:
   path: temp_files/model_2_68.h5
   type: keras
-  input_shape: [3, 3]
-  output_shape: [5]
+  input_shape: [2]
+  output_shape: [1]
 
 # Example of concrete property
 property:
-  # Choose between safety or robustness
-  type: robustness
-
-  # Whether to use a concrete or abstract property
-  use_abstraction: True
-
   # Choose between SAT / count / enumeration check
   goal: count
   
   # Choose whether to targeting safe or unsafe areas
   target_volume: unsafe
 
-  # Property's domain to verify
-  domain:
-    center: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-    radius: 0.3
-    patch_size: [2, 2]
-    
-  # Specify the postcondition to check: positive or negative, range, max or min value w.r.t. all the other nodes
-  sat_condition:
-    # Index of the pool to consider
-    pool_index: 2
-    pools: [[0], [1, 2], [3, 4]]
-    # Condition to check
-    pool_condition: max
-    
-   
+  # Path to folder of VNN-LIB files
+  path: "./example_vnnlib/dnf_1.vnnlib"

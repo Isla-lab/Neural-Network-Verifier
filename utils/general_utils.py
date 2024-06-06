@@ -38,17 +38,16 @@ def check_parameters(config_file):
     #verifier to be checked: ["ProVe", "CountingProVe", "eProVe"]
     pass
 
-def create_property(config_file_prop, input_shape, output_shape):
-    config_to_bounds(config_file_prop, input_shape, output_shape)
-    quit()
+def create_property(config_file_prop):
+    return config_to_bounds(config_file_prop)
 
-def instantiate_verifier(params):
+def instantiate_verifier(params, prop):
     verifier = params['verifier']['name']
 
     try:
         module = importlib.import_module(f"backends.{verifier}")
         method_class = getattr(module, verifier)
-        return method_class(params)
+        return method_class(params, prop)
     except ModuleNotFoundError:
         raise ImportError(f"Module '{verifier}' not found.")
     except AttributeError:

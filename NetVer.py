@@ -4,16 +4,17 @@ if __name__ == '__main__':
     
     # read the configuration file to run the verification process
     config = read_config('config.yaml')
+    properties = create_property(config)
 
-    # automatically instanciate the selected verifier
-    verifier = instantiate_verifier(config)
+    for prop in properties:
+        # automatically instanciate the selected verifier
+        verifier = instantiate_verifier(config, prop)
 
-    # compute bounds for the selected verifier
-    bounds = verifier.compute_bounds()
-    print(bounds)
+        # compute bounds for the selected verifier
+        # bounds = verifier.compute_bounds()
 
-    # start the verification process
-    verifier.verify(verbose=1)
+        # start the verification process
+        verifier.verify(verbose=0)
 
-    # report the final results 
-    verifier.print_results()
+        # report the final results
+        verifier.print_results()

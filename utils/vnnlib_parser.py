@@ -1,5 +1,8 @@
 import json
+import os
 import re
+import time
+
 
 class VNNLIBParserException(Exception):
     """
@@ -234,49 +237,60 @@ def add_missing_output_bounds(properties, output_vars):
 
     return properties
 
-def parse_vnnlib_file(file_path):
+def parse_vnnlib_files(path):
     """
     Method that opens the provided VNN-LIB file and parses it to extract properties (input and output bounds)
 
     Parameters
     ----------
-    	file_path : str
+    	path : str
     		The path to the VNN-LIB file to be parsed
 
     Compute
     ----------
-        properties : list[dict]
-        	A list of dictionaries, each for a distinct property
-        	Each dictionary contains the entries "inputs" and "outputs" for the input and output boundaries
-
+        properties_set : list[list[dict]]
+        	A list of lists, each containing a dictionary for a distinct property
+        	Each dictionary contains the entries "inputs" and "outputs" for the input and output node boundaries
     Raises
     ------
         VNNLIBParserException
             If an error is encountered while parsing the file or the file is badly formatted
     """
     try:
-        vnn_content = read_file(file_path)
+        if os.path.isdir(path):
+            vnn_content_list = []
+            for filename in os.listdir(path):
+                if filename.endswith('.vnnlib'):
+                    file_path = os.path.join(path, filename)
+                    vnn_content_list.append(read_file(file_path))
+        else:
+            vnn_content_list = [read_file(path)]
     except VNNLIBParserException as e:
         print(e)
         return None
 
-    if not vnn_content:
+    if not vnn_content_list:
         return None
 
-    # Compactify each expression into a single line
-    lines = get_compact_lines(vnn_content)
+    properties_set = []
 
-    # Regex to extract declared variables and asserted input and output boundaries
-    declaration_pattern = re.compile(r'\(declare-const (\w+) (\w+)\)')
-    bounds_pattern = re.compile(r'\(assert(?:\(or)?(?:\(and)?((?:\(<=|\(>=) (?:X_\d+|Y_\d+) [^\)]+\))*\)?\)?\)')
+    for vnn_content in vnn_content_list:
+        # Compactify each expression into a single line
+        lines = get_compact_lines(vnn_content)
 
-    # Validate all expressions
-    sanity_check(lines, declaration_pattern, bounds_pattern)
-    # Extract all declared variables
-    declared_variables, input_vars, output_vars = extract_variable_declarations(lines, declaration_pattern)
-    # Extract all properties from assertions
-    properties = extract_properties(lines, declared_variables, bounds_pattern)
-    # Add declared but unbounded output variables
-    properties = add_missing_output_bounds(properties, output_vars)
+        # Regex to extract declared variables and asserted input and output boundaries
+        declaration_pattern = re.compile(r'\(declare-const (\w+) (\w+)\)')
+        bounds_pattern = re.compile(r'\(assert(?:\(or)?(?:\(and)?((?:\(<=|\(>=) (?:X_\d+|Y_\d+) [^\)]+\))*\)?\)?\)')
 
-    return properties
+        # Validate all expressions
+        sanity_check(lines, declaration_pattern, bounds_pattern)
+        # Extract all declared variables
+        declared_variables, input_vars, output_vars = extract_variable_declarations(lines, declaration_pattern)
+        # Extract all properties from assertions
+        properties = extract_properties(lines, declared_variables, bounds_pattern)
+        # Add declared but unbounded output variables
+        properties = add_missing_output_bounds(properties, output_vars)
+
+        properties_set.append(properties)
+
+    return properties_set

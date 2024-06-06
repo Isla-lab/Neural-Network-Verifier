@@ -17,20 +17,18 @@ from utils.propagation import get_estimation
 import numpy as np
 from tqdm import tqdm
 
-class CountingProVe():
+class CountingProVe:
 
-    def __init__(self, config):
+    def __init__(self, config, prop):
         # Input parameters
         self.path_to_network = config['model']['path']
-        input_shape = config['model']['input_shape']
-        output_shape = config['model']['output_shape']
         self.network = torch.load(self.path_to_network)
 
-        self.property = gen_utilities.create_property(config, input_shape, output_shape)[0]
+        self.property = prop
         self.input_predicate = np.array(self.property["inputs"])
         self.output_predicate = np.array(self.property["outputs"])
 
-        # Verification hyper-parameters
+        # Verification hyperparameters
         self.compute_violation_rate = config['property']['target_volume'] == 'unsafe'
         self.compute_only_lower_bound = config['verifier']['params']['compute_only_lower_bound']
         self.T = config['verifier']['params']['T']
@@ -69,23 +67,23 @@ class CountingProVe():
     def count(self):	
 
         initial_area = self._compute_area_size(self.input_predicate)
-        self.property_copy = self.input_predicate.copy()
+        property_copy = self.input_predicate.copy()
         node_index = -1
         
         for _s in range(self.S):
 
             node_index += 1
-            if node_index > (self.property_copy.shape[0]-1): node_index = 0
+            if node_index > (property_copy.shape[0]-1): node_index = 0
                                     
-            _, violated_points = get_optimized_estimation(neural_net=self.network, property=self.property_copy, points=self.estimation_points, violation_rate=self.compute_violation_rate)
+            _, violated_points = get_optimized_estimation(neural_net=self.network, property=property_copy, points=self.estimation_points, violation_rate=self.compute_violation_rate)
 
             if violated_points.shape[0] < 2:
-                median = np.random.uniform(self.property_copy[node_index][0], self.property_copy[node_index][1])
+                median = np.random.uniform(property_copy[node_index][0], property_copy[node_index][1])
             else:	
                 median = np.median(violated_points[:, node_index])
 
             random_side = np.random.randint(0, 2)
-            self.property_copy[node_index][random_side] = median
+            property_copy[node_index][random_side] = median
 
 
         if not self.cpu_only:
@@ -103,16 +101,16 @@ class CountingProVe():
                                         'disk_limit': 0
                                        } } }
             
-            verifier = ProVe(config)
+            verifier = ProVe(config, self.property)
             verifier.verify(verbose=1)
             rate_split = (verifier.violation_rate / 100)
             if not self.compute_violation_rate: 
                 rate_split = 1 - rate_split
         else:
-            rate_split, _ = get_optimized_estimation(neural_net=self.network, property=self.property_copy, points=self.estimation_points, violation_rate=self.compute_violation_rate)
+            rate_split, _ = get_optimized_estimation(neural_net=self.network, property=property_copy, points=self.estimation_points, violation_rate=self.compute_violation_rate)
 
 
-        area_leaf = self._compute_area_size(self.property_copy)
+        area_leaf = self._compute_area_size(property_copy)
         violated_leaf_points = area_leaf * rate_split
         ratio = violated_leaf_points / initial_area
         
@@ -140,8 +138,8 @@ class CountingProVe():
                                         'disk_limit': 0
                                        } } }
             
-        verifier = ProVe(config)
-        bounds = verifier.compute_bounds(config['property']['domain'])
+        verifier = ProVe(config, self.property)
+        bounds = verifier.compute_bounds()
         return bounds
 
     def print_results(self):
