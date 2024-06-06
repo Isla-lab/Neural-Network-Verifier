@@ -188,15 +188,33 @@ def propagate_old_properties(properties, new_properties):
                         if variable not in new_output_bounds:
                             new_output_bounds[variable] = output_bounds[variable]
 
-def extract_properties(expressions, declared_variables, bounds_pattern):
+def extract_properties(expressions, declared_variables, disjoint_bounds_pattern, simple_bounds_pattern):
     # Regex to capture individual junction constraints
     details_pattern = re.compile(r'\((<=|>=) (X_\d+|Y_\d+) ([^\)]+)\)')
 
-    properties = [{"inputs": {}, "outputs": []}]
+    simple_expressions = []
+    disjoint_expressions = []
 
-    # Find all constraints for all expressions
     for expression in expressions:
-        if not bounds_pattern.match(expression):
+        if simple_bounds_pattern.match(expression):
+            simple_expressions.append(expression)
+        elif disjoint_bounds_pattern.match(expression):
+            disjoint_expressions.append(expression)
+
+    # Find all constraints for simple expressions
+    simple_constraints = []
+    for expression in simple_expressions:
+        constraint = details_pattern.findall(expression)
+        if constraint:
+            simple_constraints.append(constraint[0])
+
+    simple_bounds = extract_from_disjunction([simple_constraints], declared_variables)
+    merged_properties = merge_properties([], simple_bounds)
+    properties = [{"inputs": json.loads(k), "outputs": v} for k, v in merged_properties.items()]
+
+    # Find all constraints for disjoint expressions
+    for expression in disjoint_expressions:
+        if not disjoint_bounds_pattern.match(expression):
             continue
 
         constraints = []
@@ -274,20 +292,21 @@ def parse_vnnlib_files(path):
 
     properties_set = []
 
-    for vnn_content in vnn_content_list:
+    for idx, vnn_content in enumerate(vnn_content_list):
         # Compactify each expression into a single line
         lines = get_compact_lines(vnn_content)
 
         # Regex to extract declared variables and asserted input and output boundaries
         declaration_pattern = re.compile(r'\(declare-const (\w+) (\w+)\)')
-        bounds_pattern = re.compile(r'\(assert(?:\(or)?(?:\(and)?((?:\(<=|\(>=) (?:X_\d+|Y_\d+) [^\)]+\))*\)?\)?\)')
+        disjoint_bounds_pattern = re.compile(r'\(assert(?:\(or)?(?:\(and)?((?:\(<=|\(>=) (?:X_\d+|Y_\d+) [^\)]+\))*\)?\)?\)')
+        simple_bounds_pattern = re.compile(r'\(assert\((<=|>=) (X_\d+|Y_\d+) [^\)]+\)')
 
         # Validate all expressions
-        sanity_check(lines, declaration_pattern, bounds_pattern)
+        sanity_check(lines, declaration_pattern, disjoint_bounds_pattern)
         # Extract all declared variables
         declared_variables, input_vars, output_vars = extract_variable_declarations(lines, declaration_pattern)
         # Extract all properties from assertions
-        properties = extract_properties(lines, declared_variables, bounds_pattern)
+        properties = extract_properties(lines, declared_variables, disjoint_bounds_pattern, simple_bounds_pattern)
         # Add declared but unbounded output variables
         properties = add_missing_output_bounds(properties, output_vars)
 

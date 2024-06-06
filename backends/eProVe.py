@@ -37,7 +37,7 @@ class eProVe:
 			self.confidence = 1 - (self.R**self.estimation_points)
 
 
-		self.enumerate_unsafe_regions = config['property']['target'] == 'unsafe'
+		self.enumerate_unsafe_regions = config['property']['target_volume'] == 'unsafe'
 		self.compute_only_estimation = config['verifier']['params']['compute_only_estimation']
 		self.max_depth = config['verifier']['params']['max_depth']
 		self.split_node_heuristic = config['verifier']['params']['split_node_heuristic']

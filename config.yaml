@@ -1,24 +1,24 @@
-# Example configuration file for the ProVe verifier
+# We can request to compute an estimate for any verifier
 verifier:
-  name: ProVe
-  # Verifier's parameters
+  name: eProVe
+  # Specify
   params:
-    cpu_only: True # set to False to use GPU
-    time_out_cycle: 60 # maximum depth of the search tree
-    time_out_checked: 0 # percentage of volume to exclude before stopping the verification
-    interval_propagation_type: relaxation # use a parallel implementation of the symbolic+relaxation method of Wang. et al. 2018 (Neurify)
-    memory_limit: 0 # set to 0 reach the maximum available memory and then swap to disk
-    disk_limit: 0 # set to 0 to disable disk limit
-    rounding: 3 # rounding of the output of the verifier
-    estimation_points: 1000000 # number of points to estimate the volume of the target set
+    estimation_points: 3500 # number of points to estimate the volume of the target set, if not specified the verifier will compute the minimum number of points based on the confidence alpha and lower bound R specified
+    compute_only_estimation: True # whether to compute only the estimation of the volume of the target set
+    R: 0.995 # lower bound of the correctness on the probabilistic result of volume of the target set
+    alpha: 0.999 # confidence of the probabilistic result of volume of the target set
+    max_depth: 18 # maximum depth of the search tree
+    split_node_heuristic: rand # heuristic to choose the node to split
+    split_pos_heuristic: median # heuristic to choose the position to split
+    rate_tolerance_probability: 0.0001 # the rate under which do not split the node
 
 
 # Specify path and type of model
 model:
-  path: temp_files/model_2_68.h5
-  type: keras
-  input_shape: [2]
-  output_shape: [1]
+  path: temp_files/CIFAR100_resnet_large.pt
+  type: torch
+  input_shape: [3, 32, 32]
+  output_shape: [100]
 
 # Example of concrete property
 property:
@@ -29,4 +29,4 @@ property:
   target_volume: unsafe
 
   # Path to folder of VNN-LIB files
-  path: "./example_vnnlib/dnf_1.vnnlib"
+  path: "./example_vnnlibs/CIFAR100_resnet_large_prop_idx_62_sidx_313_eps_0.0039.vnnlib"

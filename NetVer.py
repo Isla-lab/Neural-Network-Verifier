@@ -12,9 +12,10 @@ if __name__ == '__main__':
 
         # compute bounds for the selected verifier
         # bounds = verifier.compute_bounds()
+        # print(bounds)
 
         # start the verification process
-        verifier.verify(verbose=0)
+        verifier.verify()
 
         # report the final results
         verifier.print_results()
