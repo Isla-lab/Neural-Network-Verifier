@@ -1,15 +1,33 @@
 import numpy as np; 
 import torch
 import torch.nn.functional as F
+import time
 
 
-def get_estimation(neural_net, property, points=3000, node_to_check=None, violation_rate=True):
+def get_estimation(neural_net, property, input_shape, points=3000, node_to_check=None, violation_rate=True):
 
+	print(points)
+	print()
+	start= time.time()
 	network_input = np.random.uniform(property[:, 0], property[:, 1], size=(points, property.shape[0]))
+	network_input = network_input.reshape((points,) + torch.Size(input_shape))
+	print("elapsed time conversion: ", time.time()-start)
+	
+	start= time.time()
+	#device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 	network_input = torch.from_numpy(network_input).float()
+	print("elapsed time conversion to tensor: ", time.time()-start)
+
+
+	start= time.time()
 	network_output = neural_net(network_input).detach().numpy()
-	if node_to_check: label_selected = np.argmax(network_output)
+	print("elapsed time forward: ", time.time()-start)
+	print(network_output)
+
+	start= time.time()
+	if node_to_check: label_selected = np.argmax(network_output, axis=1)
 	print(label_selected)
+	print("elapsed time argmax: ", time.time()-start)
 	quit()
 	
 

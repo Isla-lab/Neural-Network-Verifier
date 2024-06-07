@@ -5,6 +5,8 @@ import tensorflow as tf
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
+import onnx
+from onnx2torch import convert
 
 # Define a PyTorch model that replicates the Keras model
 class PyTorchModel(nn.Module):
@@ -100,13 +102,17 @@ def get_netver_model(config):
 		path = 'temp_files/torch_model.pth'
 		config['model']['path'] = path
 	   
-	# compute properties
-	# get original output shape
-	model = torch.load(config['model']['path'])
-	output_shape = model(torch.rand(1, model.input_shape)).shape[1]
-	config['model']['output_shape'] = output_shape
+	elif config['model']['type'] == 'onnx':
+		onnx_model = onnx.load(config['model']['path'])
+		torch_model = convert(onnx_model)
+		path = "./temp_files/CIFAR100_resnet_large.pth"
+		torch.save(torch_model, path)
+		config['model']['path'] = path
 
-	# convert original model to NetVer model
-	#TODO: implement conversion
+	else:
+		pass
+
+		# convert original model to NetVer model
+		#TODO: implement conversion
 
 	return config['model']['path']

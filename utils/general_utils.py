@@ -29,8 +29,8 @@ def read_config(file_path):
     check_parameters(config)
 
     # loading the original DNN and convert it into a NetVer format one
-    # new_path = get_netver_model(config)
-    # config['model']['path'] = new_path
+    new_path = get_netver_model(config)
+    config['model']['path'] = new_path
 
     return config
 
