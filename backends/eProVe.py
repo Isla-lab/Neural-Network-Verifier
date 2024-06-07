@@ -12,6 +12,7 @@
 import torch
 import utils.general_utils as gen_utilities
 from utils.backends_utils import Node
+from utils.propagation import get_estimation
 import numpy as np
 from tqdm import tqdm
 
@@ -21,10 +22,16 @@ class eProVe:
 		# Input parameters
 		self.path_to_network = config['model']['path']
 		self.network = torch.load(self.path_to_network)
+		print(self.network)
+		quit()
 
 		self.property = prop
 		self.input_predicate = np.array(self.property["inputs"])
 		self.output_predicate = np.array(self.property["outputs"])
+		try:
+			self.output_node_to_check = self.output_predicate[0][0][0].split('_')[1]
+		except:
+			self.output_node_to_check = None
 
 		# Verification hyperparameters
 		if 'alpha' in config['verifier']['params']:
@@ -55,7 +62,7 @@ class eProVe:
 	def verify(self):
 
 		if self.compute_only_estimation:
-			pass
+			return get_estimation(self.network, self.input_predicate, points=self.estimation_points, node_to_check=self.output_node_to_check, violation_rate=True)
 
 		else:
 			root = Node(value=self.input_predicate, network=self.network, split_node_heuristic=self.split_node_heuristic, split_pos_heuristic=self.split_pos_heuristic, max_depth=self.max_depth, enumerate_unsafe_regions=self.enumerate_unsafe_regions, rate_tolerance_probability=self.rate_tolerance_probability)
@@ -71,7 +78,7 @@ class eProVe:
 
 					# If the node is verified, add it to the safe areas list
 					if node.get_probability(self.estimation_points) == 1: 
-						areas_verified.append( node )
+						areas_verified.append(node)
 						continue
 
 					# If the node passes the test, split into the two children

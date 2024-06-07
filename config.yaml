@@ -15,7 +15,7 @@ verifier:
 
 # Specify path and type of model
 model:
-  path: temp_files/CIFAR100_resnet_large_torch.pth
+  path: temp_files/CIFAR100_resnet_large.pth
   type: torch
   input_shape: [3, 32, 32]
   output_shape: [100]

@@ -3,16 +3,26 @@ import torch
 import torch.nn.functional as F
 
 
-def get_estimation(neural_net, property, points=3000, violation_rate=True):
+def get_estimation(neural_net, property, points=3000, node_to_check=None, violation_rate=True):
 
 	network_input = np.random.uniform(property[:, 0], property[:, 1], size=(points, property.shape[0]))
 	network_input = torch.from_numpy(network_input).float()
 	network_output = neural_net(network_input).detach().numpy()
+	if node_to_check: label_selected = np.argmax(network_output)
+	print(label_selected)
+	quit()
+	
 
 	if violation_rate:
-		where_indexes = np.where([network_output <= 0])[1]
+		if node_to_check:
+			where_indexes = np.where([label_selected != node_to_check])[1]
+		else:
+			where_indexes = np.where([network_output <= 0])[1]
 	else:
-		where_indexes = np.where([network_output > 0])[1]
+		if node_to_check:
+			where_indexes = np.where([label_selected == node_to_check])[1]
+		else:
+			where_indexes = np.where([network_output > 0])[1]
 
 	sat_points = network_input[where_indexes]
 	rate = (len(where_indexes)/points)
