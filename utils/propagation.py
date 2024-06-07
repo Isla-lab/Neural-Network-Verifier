@@ -1,49 +1,38 @@
 import numpy as np; 
 import torch
 import torch.nn.functional as F
-import time
 
 
 def get_estimation(neural_net, property, input_shape, points=3000, node_to_check=None, violation_rate=True):
 
-	print(points)
-	print()
-	start= time.time()
-	network_input = np.random.uniform(property[:, 0], property[:, 1], size=(points, property.shape[0]))
+	network_input = np.random.uniform(property[:48, 0], property[:48, 1], size=(points, property.shape[0]))
+	radius = (property[0, 1] - property[0, 0])/2
+	network_input.concatenate([property[48:, 0]+radius, property[48:, 1]-radius])
 	network_input = network_input.reshape((points,) + torch.Size(input_shape))
-	print("elapsed time conversion: ", time.time()-start)
 	
-	start= time.time()
-	#device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-	network_input = torch.from_numpy(network_input).float()
-	print("elapsed time conversion to tensor: ", time.time()-start)
+	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+	network_input = torch.from_numpy(network_input).float().to(device)
+	with torch.no_grad():
+		network_output = neural_net(network_input).detach().numpy()
 
-
-	start= time.time()
-	network_output = neural_net(network_input).detach().numpy()
-	print("elapsed time forward: ", time.time()-start)
-	print(network_output)
-
-	start= time.time()
+	
 	if node_to_check: label_selected = np.argmax(network_output, axis=1)
-	print(label_selected)
-	print("elapsed time argmax: ", time.time()-start)
-	quit()
 	
-
 	if violation_rate:
 		if node_to_check:
-			where_indexes = np.where([label_selected != node_to_check])[1]
+			where_indexes = np.where([label_selected != np.int32(node_to_check)])[1]
 		else:
 			where_indexes = np.where([network_output <= 0])[1]
 	else:
 		if node_to_check:
-			where_indexes = np.where([label_selected == node_to_check])[1]
+			where_indexes = np.where([label_selected == np.int32(node_to_check)])[1]
 		else:
 			where_indexes = np.where([network_output > 0])[1]
 
 	sat_points = network_input[where_indexes]
 	rate = (len(where_indexes)/points)
+	print(f"Robust: {100-(rate*100)}%")
+	quit()
 
 	return rate, sat_points
 

@@ -3,10 +3,10 @@ verifier:
   name: eProVe
   # Specify
   params:
-    estimation_points: 1 # number of points to estimate the volume of the target set, if not specified the verifier will compute the minimum number of points based on the confidence alpha and lower bound R specified
+    estimation_points: 3500 # number of points to estimate the volume of the target set, if not specified the verifier will compute the minimum number of points based on the confidence alpha and lower bound R specified
     compute_only_estimation: True # whether to compute only the estimation of the volume of the target set
     R: 0.995 # lower bound of the correctness on the probabilistic result of volume of the target set
-    #alpha: 0.999 # confidence of the probabilistic result of volume of the target set
+    alpha: 0.999 # confidence of the probabilistic result of volume of the target set
     max_depth: 18 # maximum depth of the search tree
     split_node_heuristic: rand # heuristic to choose the node to split
     split_pos_heuristic: median # heuristic to choose the position to split
