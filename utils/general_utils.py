@@ -1,7 +1,7 @@
 import yaml
 import importlib
 import numpy as np
-from utils.converters import get_netver_model
+from utils.converters import convert_model, NetVerModel
 from utils.yaml_property_reader import config_to_bounds
 
 class bcolors:
@@ -29,7 +29,7 @@ def read_config(file_path):
     check_parameters(config)
 
     # loading the original DNN and convert it into a NetVer format one
-    new_path = get_netver_model(config)
+    new_path = convert_model(config)
     config['model']['path'] = new_path
 
     return config
@@ -52,3 +52,7 @@ def instantiate_verifier(params, prop):
         raise ImportError(f"Module '{verifier}' not found.")
     except AttributeError:
         raise AttributeError(f"Class '{verifier}' not found in module '{verifier}'.")
+
+def get_netver_model(model, output_bounds):
+    netver_model = NetVerModel(model, output_bounds)
+    return netver_model

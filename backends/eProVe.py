@@ -13,6 +13,7 @@ import torch
 import utils.general_utils as gen_utilities
 from utils.backends_utils import Node
 from utils.propagation import get_estimation
+from utils.general_utils import get_netver_model
 import numpy as np
 from tqdm import tqdm
 
@@ -21,18 +22,16 @@ class eProVe:
 	def __init__(self, config, prop):
 		# Input parameters
 		self.path_to_network = config['model']['path']
-		self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-		self.network = torch.load(self.path_to_network).to(self.device)
+		# self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+		self.network = torch.load(self.path_to_network)#.to(self.device)
 		
 		self.property = prop
 		self.input_predicate = np.array(self.property["inputs"])
 		self.input_shape = config['model']['input_shape']
-		self.output_predicate = np.array(self.property["outputs"])
+		self.output_predicate = self.property["outputs"]
 		self.output_shape = config['model']['output_shape']
-		try:
-			self.output_node_to_check = self.output_predicate[0][0][0].split('_')[1]
-		except:
-			self.output_node_to_check = None
+
+		self.network = get_netver_model(self.network, self.output_predicate)
 
 		# Verification hyperparameters
 		if 'alpha' in config['verifier']['params']:
@@ -63,7 +62,7 @@ class eProVe:
 	def verify(self):
 
 		if self.compute_only_estimation:
-			return get_estimation(self.network, self.input_predicate, self.input_shape, points=self.estimation_points, node_to_check=self.output_node_to_check, violation_rate=True)
+			return get_estimation(self.network, self.input_predicate, self.input_shape, points=self.estimation_points, violation_rate=True)
 
 		else:
 			root = Node(value=self.input_predicate, network=self.network, split_node_heuristic=self.split_node_heuristic, split_pos_heuristic=self.split_pos_heuristic, max_depth=self.max_depth, enumerate_unsafe_regions=self.enumerate_unsafe_regions, rate_tolerance_probability=self.rate_tolerance_probability)

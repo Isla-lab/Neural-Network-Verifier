@@ -1,13 +1,12 @@
 from utils.general_utils import *
 
 if __name__ == '__main__':
-    
     # read the configuration file to run the verification process
     config = read_config('config.yaml')
     properties = create_property(config)
 
     for prop in properties:
-        # automatically instanciate the selected verifier
+        # automatically instantiate the selected verifier
         verifier = instantiate_verifier(config, prop)
 
         # compute bounds for the selected verifier

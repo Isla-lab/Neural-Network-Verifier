@@ -1,32 +1,28 @@
-import numpy as np; 
+import numpy as np
 import torch
 import torch.nn.functional as F
 
+import functools
+import operator
 
-def get_estimation(neural_net, property, input_shape, points=3000, node_to_check=None, violation_rate=True):
 
-	network_input = np.random.uniform(property[:48, 0], property[:48, 1], size=(points, property.shape[0]))
-	radius = (property[0, 1] - property[0, 0])/2
-	network_input.concatenate([property[48:, 0]+radius, property[48:, 1]-radius])
+def get_estimation(neural_net, prop, input_shape, points=3000, violation_rate=True):
+
+	uniform_input_shape = (points, functools.reduce(operator.mul, input_shape, 1))
+
+	radius = prop[0, 1] - prop[0, 0]
+
+	network_input = np.random.uniform(prop[:, 0], prop[:, 1], size=uniform_input_shape)
+
 	network_input = network_input.reshape((points,) + torch.Size(input_shape))
-	
-	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-	network_input = torch.from_numpy(network_input).float().to(device)
+	network_input = torch.from_numpy(network_input).float()
+
 	with torch.no_grad():
 		network_output = neural_net(network_input).detach().numpy()
-
-	
-	if node_to_check: label_selected = np.argmax(network_output, axis=1)
 	
 	if violation_rate:
-		if node_to_check:
-			where_indexes = np.where([label_selected != np.int32(node_to_check)])[1]
-		else:
 			where_indexes = np.where([network_output <= 0])[1]
 	else:
-		if node_to_check:
-			where_indexes = np.where([label_selected == np.int32(node_to_check)])[1]
-		else:
 			where_indexes = np.where([network_output > 0])[1]
 
 	sat_points = network_input[where_indexes]
