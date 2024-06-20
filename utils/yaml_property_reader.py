@@ -1,3 +1,5 @@
+import os
+
 from utils.vnnlib_parser import parse_vnnlib_files
 
 class YamlConfigReaderException(Exception):
@@ -11,7 +13,7 @@ class YamlConfigReaderException(Exception):
         self.message = message
         super().__init__(self.message)
 
-def fix_yaml_bounds(yaml_bounds):
+def convert_string_bounds(yaml_bounds):
     # Convert numerical values for bounds to float type
     new_bounds = []
     for variable_bounds in yaml_bounds:
@@ -50,7 +52,7 @@ def pools_to_disjunction(pools, pool_idx, num_nodes, condition):
                 if bound_idx not in pools[pool_idx]:
                     disjunction_bound[bound_idx] = [f'Y_{node_idx}', float('inf')]
         elif isinstance(condition, list):
-            disjunction_bound[node_idx] = fix_yaml_bounds([condition])[0][0]
+            disjunction_bound[node_idx] = convert_string_bounds([condition])[0][0]
         else:
             raise YamlConfigReaderException(f"Invalid bounds for SAT condition: {condition}")
         disjunction_bounds.append(disjunction_bound)
@@ -148,7 +150,7 @@ def perturbation_to_bounds(domain, input_shape):
 
 def prop_to_input_bounds(domain, condition_type, input_shape):
     if condition_type == "safety":
-        input_bounds = fix_yaml_bounds(domain["bounds"])
+        input_bounds = convert_string_bounds(domain["bounds"])
     elif condition_type == "robustness":
         input_bounds = perturbation_to_bounds(domain, input_shape)
     else:
@@ -185,18 +187,65 @@ def format_file_content(input_bounds, output_bounds):
 
     return content
 
+def format_folder_content(input_bounds, output_bounds):
+    folder_content = []
+
+    for input_bound in input_bounds:
+        content = ""
+
+        # Add variable declarations
+        for variable, _ in enumerate(input_bounds[0]):
+            content += f"(declare-const X_{variable} Real)\n"
+
+        for variable, _ in enumerate(output_bounds[0]):
+            content += f"(declare-const Y_{variable} Real)\n"
+
+        content += "\n(assert (or\n"
+        for output_bound in output_bounds:
+            content += "    (and "
+
+            for input_variable, bound in enumerate(input_bound):
+                content += f"(>= X_{input_variable} {bound[0]})"
+                content += f"(<= X_{input_variable} {bound[1]})"
+
+            for output_variable, bound in enumerate(output_bound):
+                if isinstance(bound[0], str) or bound[0] > float('-inf'):
+                    content += f"(>= Y_{output_variable} {bound[0]}) "
+                if isinstance(bound[1], str) or bound[1] < float('inf'):
+                    content += f"(<= Y_{output_variable} {bound[1]})"
+
+            content += ")\n"
+        content += "))\n"
+
+        folder_content.append(content)
+
+    return folder_content
+
 def write_to_file(file_path, content):
     try:
-        file = open(file_path, 'w')
+        file = open(f"{file_path}.vnnlib", 'w')
         file.write(content)
     except Exception as e:
-        raise YamlConfigReaderException(f"An error occurred while trying to write the vnnlib file {file_path}: {e}")
+        raise YamlConfigReaderException(f"An error occurred while trying to write the vnnlib file {file_path}.vnnlib: {e}")
+
+def write_to_folder(folder_path, folder_content):
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
+    for content_idx, content in enumerate(folder_content):
+        try:
+            file = open(f"./{folder_path}/{folder_path}_{content_idx}.vnnlib", 'w')
+            file.write(content)
+        except Exception as e:
+            raise YamlConfigReaderException(f"An error occurred while trying to write the vnnlib file {folder_path}.vnnlib: {e}")
 
 def write_vnnlib_file(file_path, prop, input_shape, output_shape):
     # Derive input and output bounds
     domain = prop["domain"]
     condition_type = prop["type"]
     input_bounds = prop_to_input_bounds(domain, condition_type, input_shape)
+
+    use_patches = prop["domain"]["patch_size"]
 
     sat_condition = prop["sat_condition"]
 
@@ -209,10 +258,20 @@ def write_vnnlib_file(file_path, prop, input_shape, output_shape):
     output_bounds = prop_to_output_bounds(sat_condition, use_abstraction, num_nodes)
 
     # Format bounds into the VNN-LIB format
-    vnnlib_content = format_file_content(input_bounds, output_bounds)
+    if use_patches:
+        vnnlib_folder_content = format_folder_content(input_bounds, output_bounds)
 
-    # Write VNN-LIB properties to file
-    write_to_file(file_path, vnnlib_content)
+        # Write VNN-LIB properties to file
+        write_to_folder(file_path, vnnlib_folder_content)
+
+        return file_path
+    else:
+        vnnlib_content = format_file_content(input_bounds, output_bounds)
+
+        # Write VNN-LIB properties to file
+        write_to_file(file_path, vnnlib_content)
+
+        return f"{file_path}.vnnlib"
 
 def config_to_bounds(config):
     """
@@ -242,8 +301,8 @@ def config_to_bounds(config):
     if "path" in prop:
         properties_set = parse_vnnlib_files(prop["path"])
     else:
-        write_vnnlib_file("./config_property.vnnlib", prop, input_shape, output_shape)
-        properties_set = parse_vnnlib_files("./config_property.vnnlib")
+        vnnlib_path = write_vnnlib_file("./config_property", prop, input_shape, output_shape)
+        properties_set = parse_vnnlib_files(vnnlib_path)
 
     # Change dictionary structure into list of lists
     properties_bounds = []

@@ -43,9 +43,8 @@ class eProVe:
 			self.R = config['verifier']['params']['R']
 			self.confidence = 1 - (self.R**self.estimation_points)
 
-
 		self.enumerate_unsafe_regions = config['property']['target_volume'] == 'unsafe'
-		self.compute_only_estimation = config['verifier']['params']['compute_only_estimation']
+		self.compute_only_estimation = bool(config['verifier']['params']['compute_only_estimation'])
 		self.max_depth = config['verifier']['params']['max_depth']
 		self.split_node_heuristic = config['verifier']['params']['split_node_heuristic']
 		self.split_pos_heuristic = config['verifier']['params']['split_pos_heuristic']
@@ -99,7 +98,6 @@ class eProVe:
 				frontier.clear()
 				frontier = next_frontier.copy()
 				next_frontier.clear()
-
 
 			# Compute the underestimation of the safe areas and the safe rate
 			regions_size = sum([ subarea.compute_area_size() for subarea in areas_verified ])

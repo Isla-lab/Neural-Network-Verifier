@@ -28,7 +28,6 @@ def get_estimation(neural_net, prop, input_shape, points=3000, violation_rate=Tr
 	sat_points = network_input[where_indexes]
 	rate = (len(where_indexes)/points)
 	print(f"Robust: {100-(rate*100)}%")
-	quit()
 
 	return rate, sat_points
 

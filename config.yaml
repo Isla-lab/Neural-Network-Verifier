@@ -15,18 +15,35 @@ verifier:
 
 # Specify path and type of model
 model:
-  path: ./temp_files/CIFAR100_resnet_large.pth
+  path: ./temp_files/test_patch_model.pt
   type: torch
-  input_shape: [3, 32, 32]
-  output_shape: [100]
+  input_shape: [1, 4, 4]
+  output_shape: [3]
 
 # Example of concrete property
 property:
   # Choose between SAT / count / enumeration check
   goal: count
+
+  type: robustness
+  use_abstraction: False
   
   # Choose whether to targeting safe or unsafe areas
   target_volume: unsafe
 
   # Path to folder of VNN-LIB files
-  path: "./example_vnnlibs/CIFAR100_resnet_large_prop_idx_62_sidx_313_eps_0.0039.vnnlib"
+  # path: "./example_vnnlibs/CIFAR100_resnet_large_prop_idx_62_sidx_313_eps_0.0039.vnnlib"
+
+  # Property's domain to verify
+  domain:
+    center: [0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3]
+    perturbation_type: upper_threshold
+    perturbation: 1.0
+    patch_size: [ 1, 2, 2 ]
+
+  # Specify the postcondition to check: positive or negative, range, max or min value w.r.t. all the other nodes
+  sat_condition:
+    # Choose concrete node to check
+    node_index: 1
+    # Condition to check
+    node_condition: [-1000.0, 1000.0]

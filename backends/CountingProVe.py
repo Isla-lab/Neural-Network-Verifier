@@ -28,6 +28,8 @@ class CountingProVe:
         self.input_predicate = np.array(self.property["inputs"])
         self.output_predicate = np.array(self.property["outputs"])
 
+        self.network = gen_utilities.get_netver_model(self.network, self.output_predicate)
+
         # Verification hyperparameters
         self.compute_violation_rate = config['property']['target_volume'] == 'unsafe'
         self.compute_only_lower_bound = config['verifier']['params']['compute_only_lower_bound']

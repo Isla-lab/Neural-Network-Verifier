@@ -47,6 +47,9 @@ class ProVe:
 
 		self.compute_violation_rate = config['property']['target_volume'] == 'unsafe'
 		self.estimation_points = config['verifier']['params']['estimation_points']
+
+		self.network = gen_utilities.get_netver_model(self.network, self.output_predicate)
+
 		self.estimated_VR = prop_utility.get_estimation(self.network, self.input_predicate, self.estimation_points, self.compute_violation_rate)
 		
 		# Verification hyperparameters

@@ -1,8 +1,10 @@
-import yaml
 import importlib
-import numpy as np
+
+import yaml
+
 from utils.converters import convert_model, NetVerModel
 from utils.yaml_property_reader import config_to_bounds
+
 
 class bcolors:
     HEADER = '\033[95m'

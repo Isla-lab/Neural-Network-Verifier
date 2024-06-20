@@ -1,8 +1,8 @@
-from utils.general_utils import *
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+
 class ConvolutionalNetwork(nn.Module):
     def __init__(self):
         super(ConvolutionalNetwork, self).__init__()
@@ -27,24 +27,16 @@ class ConvolutionalNetwork(nn.Module):
         x = self.fc(x)
         return x
 
-import __main__
-setattr(__main__, "ConvolutionalNetwork", ConvolutionalNetwork)
 
-if __name__ == '__main__':
-    # read the configuration file to run the verification process
-    config = read_config('config.yaml')
-    properties = create_property(config)
+# Create the neural network model
+model = ConvolutionalNetwork()
 
-    for prop in properties:
-        # automatically instantiate the selected verifier
-        verifier = instantiate_verifier(config, prop)
+# Example input (4x4 with 1 channel, indicating grayscale image)
+example_input = torch.randn(1, 1, 4, 4)  # Batch size of 1
 
-        # compute bounds for the selected verifier
-        # bounds = verifier.compute_bounds()
-        # print(bounds)
+# Forward pass to get the output
+output = model(example_input)
 
-        # start the verification process
-        verifier.verify()
+print("Output of the network:", output)
 
-        # report the final results
-        # verifier.print_results()
+torch.save(model, "test_patch_model.pt")
