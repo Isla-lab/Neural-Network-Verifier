@@ -1,3 +1,5 @@
 /ProVe_partial_results
 /.idea
 **/__pycache__/
+
+/config_properties
