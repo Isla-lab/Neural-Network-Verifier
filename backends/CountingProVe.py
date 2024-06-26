@@ -28,7 +28,7 @@ class CountingProVe:
         self.input_predicate = np.array(self.property["inputs"])
         self.output_predicate = np.array(self.property["outputs"])
 
-        self.network = gen_utilities.get_netver_model(self.network, self.output_predicate)
+        self.netver_network = gen_utilities.get_netver_model(self.network, self.output_predicate)
 
         # Verification hyperparameters
         self.compute_violation_rate = config['property']['target_volume'] == 'unsafe'
@@ -77,7 +77,7 @@ class CountingProVe:
             node_index += 1
             if node_index > (property_copy.shape[0]-1): node_index = 0
                                     
-            _, violated_points = get_optimized_estimation(neural_net=self.network, property=property_copy, points=self.estimation_points, violation_rate=self.compute_violation_rate)
+            _, violated_points = get_optimized_estimation(neural_net=self.netver_network, property=property_copy, points=self.estimation_points, violation_rate=self.compute_violation_rate)
 
             if violated_points.shape[0] < 2:
                 median = np.random.uniform(property_copy[node_index][0], property_copy[node_index][1])
@@ -109,7 +109,7 @@ class CountingProVe:
             if not self.compute_violation_rate: 
                 rate_split = 1 - rate_split
         else:
-            rate_split, _ = get_optimized_estimation(neural_net=self.network, property=property_copy, points=self.estimation_points, violation_rate=self.compute_violation_rate)
+            rate_split, _ = get_optimized_estimation(neural_net=self.netver_network, property=property_copy, points=self.estimation_points, violation_rate=self.compute_violation_rate)
 
 
         area_leaf = self._compute_area_size(property_copy)

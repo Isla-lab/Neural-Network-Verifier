@@ -48,9 +48,9 @@ class ProVe:
 		self.compute_violation_rate = config['property']['target_volume'] == 'unsafe'
 		self.estimation_points = config['verifier']['params']['estimation_points']
 
-		self.network = gen_utilities.get_netver_model(self.network, self.output_predicate)
+		self.netver_network = gen_utilities.get_netver_model(self.network, self.output_predicate)
 
-		self.estimated_VR = prop_utility.get_estimation(self.network, self.input_predicate, self.estimation_points, self.compute_violation_rate)
+		self.estimated_VR = prop_utility.get_estimation(self.netver_network, self.input_predicate, self.estimation_points, self.compute_violation_rate)
 		
 		# Verification hyperparameters
 		self.cpu_only = config['verifier']['params']['cpu_only']
@@ -153,7 +153,7 @@ class ProVe:
 
 
 				# Call the propagation method to obtain the output bound from the input area (primal and dual)
-				test_bound = self._propagation_method(test_domain, self.network, self.interval_propagation_type, self.memory_limit)
+				test_bound = self._propagation_method(test_domain, self.netver_network, self.interval_propagation_type, self.memory_limit)
 
 				# Call the verifier (N(x) >= 0) on all the subareas
 				unknown_id, violated_id, proved_id = self._complete_verifier(test_bound)
@@ -236,6 +236,8 @@ class ProVe:
 		areas_matrix = np.array([self.input_predicate.flatten()])
 		test_domain = areas_matrix.reshape(-1, self.input_predicate.shape[0], 2)
 		bounds = self._propagation_method(test_domain, self.network, self.interval_propagation_type, self.memory_limit)
+
+		print(bounds)
 
 		return [bounds[0][0][0], bounds[0][0][1]]
 

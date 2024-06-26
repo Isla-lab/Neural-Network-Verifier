@@ -18,7 +18,6 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 
-
 def read_config(file_path):
     with open(file_path, 'r') as stream:
         try:
@@ -36,12 +35,18 @@ def read_config(file_path):
 
     return config
 
+
 def check_parameters(config_file):
     #verifier to be checked: ["ProVe", "CountingProVe", "eProVe"]
     pass
 
+
 def create_property(config_file_prop):
-    return config_to_bounds(config_file_prop)
+    print(f'\rReading safety property...{" " * 20}', end='')
+    bounds, compute_output_bounds = config_to_bounds(config_file_prop)
+    print(f'\rSafety property loaded!{" " * 20}')
+    return bounds, compute_output_bounds
+
 
 def instantiate_verifier(params, prop):
     verifier = params['verifier']['name']
@@ -55,6 +60,9 @@ def instantiate_verifier(params, prop):
     except AttributeError:
         raise AttributeError(f"Class '{verifier}' not found in module '{verifier}'.")
 
+
 def get_netver_model(model, output_bounds):
-    netver_model = NetVerModel(model, output_bounds)
-    return netver_model
+    if len(output_bounds) > 0:
+        return NetVerModel(model, output_bounds)
+    else:
+        return None

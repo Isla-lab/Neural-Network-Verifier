@@ -10,8 +10,6 @@ def get_estimation(neural_net, prop, input_shape, points=3000, violation_rate=Tr
 
 	uniform_input_shape = (points, functools.reduce(operator.mul, input_shape, 1))
 
-	radius = prop[0, 1] - prop[0, 0]
-
 	network_input = np.random.uniform(prop[:, 0], prop[:, 1], size=uniform_input_shape)
 
 	network_input = network_input.reshape((points,) + torch.Size(input_shape))

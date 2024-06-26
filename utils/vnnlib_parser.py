@@ -11,9 +11,11 @@ class VNNLIBParserException(Exception):
     Attributes:
         message -- explanation of the format error
     """
+
     def __init__(self, message="Badly formatted VNNLIB file"):
         self.message = message
         super().__init__(self.message)
+
 
 def read_file(file_path):
     try:
@@ -24,6 +26,7 @@ def read_file(file_path):
         raise VNNLIBParserException(f"The file '{file_path}' does not exist")
     except Exception as e:
         raise VNNLIBParserException(f"An error occurred while trying to open the file {file_path}: {e}")
+
 
 def get_compact_lines(content):
     # Compact expressions spanning multiple lines into a single line based on the parentheses count
@@ -49,6 +52,7 @@ def get_compact_lines(content):
 
     return compact_lines
 
+
 def preprocess_line(line):
     # Remove trailing spaces
     line = line.strip()
@@ -60,6 +64,7 @@ def preprocess_line(line):
     # Remove all content contained within a comment
     line = line.split(';', 1)[0]
     return line
+
 
 def check_faulty_expression(expression_idx, expression, declaration_pattern, bounds_pattern):
     open_parentheses = expression.count("(")
@@ -76,10 +81,12 @@ def check_faulty_expression(expression_idx, expression, declaration_pattern, bou
         if not (declaration_matches or expression_matches):
             raise VNNLIBParserException(f"Badly formatted processed line {expression_idx}: {expression}")
 
+
 def sanity_check(expressions, declaration_pattern, bounds_pattern):
     # Ensure that all expressions are valid or throw an exception
     for idx, expression in enumerate(expressions):
         check_faulty_expression(idx, expression, declaration_pattern, bounds_pattern)
+
 
 def extract_variable_declarations(expressions, declaration_pattern):
     # Extract the declared variables from the expressions
@@ -101,12 +108,14 @@ def extract_variable_declarations(expressions, declaration_pattern):
 
     return variable_declarations, input_vars, output_vars
 
+
 def sort_dict_by_numeric_keys(input_dict):
     # Extract keys and sort them based on the numeric part
     sorted_keys = sorted(input_dict.keys(), key=lambda k: int(k.split('_')[1]))
     # Create a new dictionary with sorted keys
     sorted_dict = {key: input_dict[key] for key in sorted_keys}
     return sorted_dict
+
 
 def extract_from_disjunction(constraints, declared_variables):
     new_bounds = []
@@ -148,6 +157,7 @@ def extract_from_disjunction(constraints, declared_variables):
 
     return new_bounds
 
+
 def merge_properties(properties, new_bounds):
     # Merge properties with equal input bounds
     merged_properties = {}
@@ -170,6 +180,7 @@ def merge_properties(properties, new_bounds):
 
     return merged_properties
 
+
 def propagate_old_properties(properties, new_properties):
     # Join the new properties from the current expression with all previous properties
     for new_prop in new_properties:
@@ -187,6 +198,7 @@ def propagate_old_properties(properties, new_properties):
                     for variable in output_bounds.keys():
                         if variable not in new_output_bounds:
                             new_output_bounds[variable] = output_bounds[variable]
+
 
 def extract_properties(expressions, declared_variables, disjoint_bounds_pattern, simple_bounds_pattern):
     # Regex to capture individual junction constraints
@@ -241,6 +253,7 @@ def extract_properties(expressions, declared_variables, disjoint_bounds_pattern,
 
     return properties
 
+
 def add_missing_output_bounds(properties, output_vars):
     # Add inf bounds for unbounded output variables
     for prop in properties:
@@ -254,6 +267,7 @@ def add_missing_output_bounds(properties, output_vars):
             prop["outputs"][bound_idx] = sort_dict_by_numeric_keys(prop["outputs"][bound_idx])
 
     return properties
+
 
 def parse_vnnlib_files(path):
     """
@@ -275,14 +289,13 @@ def parse_vnnlib_files(path):
             If an error is encountered while parsing the file or the file is badly formatted
     """
     try:
-        if os.path.isdir(path):
-            vnn_content_list = []
-            for filename in os.listdir(path):
-                if filename.endswith('.vnnlib'):
-                    file_path = os.path.join(path, filename)
-                    vnn_content_list.append(read_file(file_path))
-        else:
-            vnn_content_list = [read_file(path)]
+        vnn_content_list = []
+        for file_idx, filename in enumerate(os.listdir(path)):
+            print(f'\rLoading VNNLIB file {file_idx}/{len(os.listdir(path))}{" " * 20}', end='')
+
+            if filename.endswith('.vnnlib'):
+                file_path = os.path.join(path, filename)
+                vnn_content_list.append(read_file(file_path))
     except VNNLIBParserException as e:
         print(e)
         return None
@@ -293,12 +306,15 @@ def parse_vnnlib_files(path):
     properties_set = []
 
     for idx, vnn_content in enumerate(vnn_content_list):
+        print(f'\rExtracting VNNLIB properties from file {idx}/{len(vnn_content_list)}{" " * 20}', end='')
+
         # Compactify each expression into a single line
         lines = get_compact_lines(vnn_content)
 
         # Regex to extract declared variables and asserted input and output boundaries
         declaration_pattern = re.compile(r'\(declare-const (\w+) (\w+)\)')
-        disjoint_bounds_pattern = re.compile(r'\(assert(?:\(or)?(?:\(and)?((?:\(<=|\(>=) (?:X_\d+|Y_\d+) [^\)]+\))*\)?\)?\)')
+        disjoint_bounds_pattern = re.compile(
+            r'\(assert(?:\(or)?(?:\(and)?((?:\(<=|\(>=) (?:X_\d+|Y_\d+) [^\)]+\))*\)?\)?\)')
         simple_bounds_pattern = re.compile(r'\(assert\((<=|>=) (X_\d+|Y_\d+) [^\)]+\)')
 
         # Validate all expressions
