@@ -15,7 +15,7 @@ verifier:
 
 # Specify path and type of model
 model:
-  path: ./example_models/resnet_cifar10.pth
+  path: ./example_models/vit_cifar10.bin
   type: torch
   input_shape: [3, 32, 32]
   output_shape: [10]
@@ -29,7 +29,7 @@ property:
   use_abstraction: False
   
   # Choose whether to targeting safe or unsafe areas
-  target_volume: unsafe
+  target_volume: safe
 
   # Path to folder of VNN-LIB files
   # path: "./example_vnnlibs/CIFAR100_resnet_large_prop_idx_62_sidx_313_eps_0.0039.vnnlib"
@@ -38,12 +38,12 @@ property:
   domain:
     perturbation_center_path: ./example_models/tensor_image.pt
     perturbation_type: radius
-    perturbation: 0.01
-    patch_size: [ 3, 4, 4 ]
+    perturbation: 0.0
+    patch_size: [ 3, 31, 31 ]
 
   # Specify the postcondition to check: positive or negative, range, max or min value w.r.t. all the other nodes
-  #sat_condition:
+  sat_condition:
     # Choose concrete node to check
-  #  node_index: 1
+    node_index: 1
     # Condition to check
-  #  node_condition: non-max
+    node_condition: non-max

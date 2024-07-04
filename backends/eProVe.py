@@ -26,7 +26,7 @@ class eProVe:
         # Input parameters
         self.path_to_network = config['model']['path']
         # self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
-        self.network = torch.load(self.path_to_network)  # .to(self.device)
+        self.network = torch.load(self.path_to_network).to(torch.device("cuda"))  # .to(self.device)
 
         self.property = prop
         self.input_predicate = np.array(self.property["inputs"])
@@ -34,7 +34,7 @@ class eProVe:
         self.output_predicate = self.property["outputs"]
         self.output_shape = config['model']['output_shape']
 
-        self.netver_network = get_netver_model(self.network, self.output_predicate)
+        self.netver_network = get_netver_model(self.network, self.output_predicate).to(torch.device("cuda"))
 
         # Verification hyperparameters
         if 'alpha' in config['verifier']['params']:
@@ -63,7 +63,7 @@ class eProVe:
 
         if self.compute_only_estimation:
             return get_estimation(self.netver_network, self.input_predicate, self.input_shape,
-                                  points=self.estimation_points, violation_rate=True)
+                                  points=self.estimation_points, violation_rate=self.enumerate_unsafe_regions)
 
         else:
             root = Node(value=self.input_predicate, network=self.netver_network,

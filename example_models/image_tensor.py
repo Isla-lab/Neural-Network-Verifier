@@ -7,7 +7,6 @@ from PIL import Image
 # Transformation for the CIFAR-10 images
 transform = transforms.Compose([
     transforms.ToTensor(),  # Converts image to PyTorch tensor
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))  # Normalize the images
 ])
 
 # Function to load an image and transform it

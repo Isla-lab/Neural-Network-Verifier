@@ -60,6 +60,8 @@ class NetVerModel(nn.Module):
     def forward(self, x):
         outputs = self.model.forward(x)
 
+        outputs = outputs[0]
+
         outputs = self.bounds_layer(outputs)
         outputs = self.relu(outputs)
 

@@ -5,30 +5,40 @@ import torch.nn.functional as F
 import functools
 import operator
 
+from torchvision.transforms import transforms
+
 
 def get_estimation(neural_net, prop, input_shape, points=3000, violation_rate=True):
+
+	points = 500
 
 	uniform_input_shape = (points, functools.reduce(operator.mul, input_shape, 1))
 
 	network_input = np.random.uniform(prop[:, 0], prop[:, 1], size=uniform_input_shape)
 
 	network_input = network_input.reshape((points,) + torch.Size(input_shape))
-	network_input = torch.from_numpy(network_input).float()
+	network_input = torch.from_numpy(network_input).float().to(torch.device("cuda"))
+
+	normalization_transform = transforms.Compose([
+		# transforms.Resize((128, 128)),
+		transforms.Resize((224, 224)),
+		transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+	])
+
+	network_input = torch.stack([normalization_transform(image) for image in network_input]).to(torch.device("cuda"))
 
 	with torch.no_grad():
-		network_output = neural_net(network_input).detach().numpy()
-	
+		network_output = neural_net(network_input).cpu().detach().numpy()
+
 	if violation_rate:
-			where_indexes = np.where([network_output <= 0])[1]
+		where_indexes = np.where([network_output <= 0])[1]
 	else:
-			where_indexes = np.where([network_output > 0])[1]
+		where_indexes = np.where([network_output > 0])[1]
 
-	sat_points = network_input[where_indexes]
+	# sat_points = network_input[where_indexes]
 	rate = (len(where_indexes)/points)
-	print(f"Robust: {100-(rate*100)}%")
 
-	return rate, sat_points
-
+	return rate
 
 
 def multi_area_propagation_cpu(input_domain, net_model, prop_type, memory_limit):

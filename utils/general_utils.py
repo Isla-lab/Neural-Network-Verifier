@@ -1,5 +1,6 @@
 import importlib
 
+import numpy as np
 import yaml
 
 from utils.converters import convert_model, NetVerModel
@@ -22,7 +23,7 @@ def read_config(file_path):
     with open(file_path, 'r') as stream:
         try:
             config = yaml.safe_load(stream)
-           
+
         except yaml.YAMLError as exc:
             print(exc)
 
@@ -37,7 +38,7 @@ def read_config(file_path):
 
 
 def check_parameters(config_file):
-    #verifier to be checked: ["ProVe", "CountingProVe", "eProVe"]
+    # verifier to be checked: ["ProVe", "CountingProVe", "eProVe"]
     pass
 
 
@@ -66,3 +67,15 @@ def get_netver_model(model, output_bounds):
         return NetVerModel(model, output_bounds)
     else:
         return None
+
+
+def print_verification_metrics(verified_properties):
+    verified_properties = np.array(verified_properties)
+
+    robust_properties = np.sum(verified_properties == 1.0)
+    robustness_mean = np.mean(verified_properties)
+    robustness_median = np.median(verified_properties)
+
+    print(f"\tRobustness mean: {robustness_mean * 100}%")
+    print(f"\tRobustness median: {robustness_median * 100}%")
+    print(f"\tNumber of robust patches: {robust_properties}/{len(verified_properties)}\n")

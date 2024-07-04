@@ -1,3 +1,4 @@
+
 from utils.general_utils import *
 
 from example_models.resnet_model import Net, ResidualBlock
@@ -11,7 +12,9 @@ if __name__ == '__main__':
     config = read_config('config.yaml')
     properties, compute_bounds = create_property(config)
 
-    for prop in properties:
+    verified_properties = []
+    for prop_idx, prop in enumerate(properties):
+        print(f'\rVerifying property {prop_idx}/{len(properties)}{" " * 20}', end='')
         # automatically instantiate the selected verifier
         verifier = instantiate_verifier(config, prop)
 
@@ -21,6 +24,9 @@ if __name__ == '__main__':
             print(bounds)
         # verify output SAT condition
         else:
-            verifier.verify()
+            verified_properties.append(verifier.verify())
             # report the final results
             # verifier.print_results()
+    print("\nVerification complete!")
+
+    print_verification_metrics(verified_properties)
